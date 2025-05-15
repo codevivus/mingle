@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: always
+    command: ["redis-server", "--requirepass", "admin"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: "exit 0"
+    networks:
+      - mingle-net
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: eureka-server.Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: "exit 0"
+      retries: 3
+    networks:
+      - mingle-net
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: gateway-server.Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: "exit 0"
+    networks:
+      - mingle-net
+
+  a2srv-service:
+    build:
+      context: ./a2srv-service
+      dockerfile: a2srv-service.Dockerfile
+    container_name: a2srv-service
+    ports:
+      - "8051:8051"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: "exit 0"
+    networks:
+      - mingle-net
+
+networks:
+  mingle-net:
+    driver: bridge

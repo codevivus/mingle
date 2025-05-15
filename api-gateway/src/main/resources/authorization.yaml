@@ -1,0 +1,29 @@
+authorization:
+  whitelist-paths:
+    - /auth/login
+    - /auth/validate
+    - /user/register
+    - /user/check-email
+    - /user/check-username
+    - /actuator/health
+
+  routes:
+    - id: auth-service
+      path: /auth/**
+      uri: lb://a2srv-service
+
+    - id: user-service
+      path: /user/**
+      uri: lb://a2srv-service
+
+  cors:
+    allowed-origins:
+      - https://localhost:4200
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+    allowed-headers:
+      - Content-Type
+      - Authorization
