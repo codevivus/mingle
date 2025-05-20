@@ -15,6 +15,10 @@ authorization:
     - id: user-service
       path: /user/**
       uri: lb://a2srv-service
+      
+    - id: event-service
+      path: /event/**
+      uri: lb://a2srv-service
 
   cors:
     allowed-origins:
