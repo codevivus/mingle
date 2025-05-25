@@ -23,4 +23,5 @@ public interface TicketMapper {
     })
     TicketResponse toResponse(Ticket ticket, EventResponse eventResponse, UserResponse userResponse);
 
+
 }
