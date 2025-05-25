@@ -30,75 +30,75 @@ public class UserRequestValidator implements Validator {
     public void validate(Object target, Errors errors) {
         UserRequest req = (UserRequest) target;
 
-        if (req.username() != null) {
-            if (req.username().isBlank()) {
+        if (req.getUsername() != null) {
+            if (req.getUsername().isBlank()) {
                 errors.rejectValue("username", "Blank.username", "Username cannot be blank");
-            } else if (req.username().length() > 50) {
+            } else if (req.getUsername().length() > 50) {
                 errors.rejectValue("username", "Length.username", "Username max length is 50");
             }
         }
 
-        if (req.email() != null) {
-            if (!EMAIL_REGEX.matcher(req.email()).matches()) {
+        if (req.getEmail() != null) {
+            if (!EMAIL_REGEX.matcher(req.getEmail()).matches()) {
                 errors.rejectValue("email", "Format.email", "Invalid email format");
             }
         }
 
-        if (req.password() != null && req.password().length() < 6) {
+        if (req.getPassword() != null && req.getPassword().length() < 6) {
             errors.rejectValue("password", "Length.password", "Password must be at least 6 characters");
         }
 
-        if (req.name() != null && req.name().length() > 50) {
+        if (req.getName() != null && req.getName().length() > 50) {
             errors.rejectValue("name", "Length.name", "Name max length is 50");
         }
 
-        if (req.surname() != null && req.surname().length() > 50) {
+        if (req.getSurname() != null && req.getSurname().length() > 50) {
             errors.rejectValue("surname", "Length.surname", "Surname max length is 50");
         }
 
-        if (req.age() != null && req.age() < 18) {
+        if (req.getAge() != null && req.getAge() < 18) {
             errors.rejectValue("age", "Min.age", "Age must be at least 18");
         }
 
-        if (req.gender() != null && !ALLOWED_GENDERS.contains(req.gender().toLowerCase().trim())) {
+        if (req.getGender() != null && !ALLOWED_GENDERS.contains(req.getGender().toLowerCase().trim())) {
             errors.rejectValue("gender", "Invalid.gender", "Invalid gender value");
         }
 
-        if (req.datePreference() != null &&
-                !ALLOWED_PREFERENCES.contains(req.datePreference().toLowerCase().trim())) {
+        if (req.getDatePreference() != null &&
+                !ALLOWED_PREFERENCES.contains(req.getDatePreference().toLowerCase().trim())) {
             errors.rejectValue("datePreference", "Invalid.datePreference", "Invalid date preference value");
         }
 
-        if (req.relationshipGoal() != null &&
-                !ALLOWED_GOALS.contains(req.relationshipGoal().toLowerCase().trim())) {
+        if (req.getRelationshipGoal() != null &&
+                !ALLOWED_GOALS.contains(req.getRelationshipGoal().toLowerCase().trim())) {
             errors.rejectValue("relationshipGoal", "Invalid.relationshipGoal", "Invalid relationship goal");
         }
 
-        if (req.bio() != null && req.bio().length() > 500) {
+        if (req.getBio() != null && req.getBio().length() > 500) {
             errors.rejectValue("bio", "Length.bio", "Bio max length is 500");
         }
 
-        if (req.photoUrl() != null && req.photoUrl().length() > 255) {
+        if (req.getPhotoUrl() != null && req.getPhotoUrl().length() > 255) {
             errors.rejectValue("photoUrl", "Length.photoUrl", "Photo URL too long");
         }
 
-        if (req.city() != null && req.city().length() > 100) {
+        if (req.getCity() != null && req.getCity().length() > 100) {
             errors.rejectValue("city", "Length.city", "City max length is 100");
         }
 
-        if (req.locationLat() != null && (req.locationLat() < -90 || req.locationLat() > 90)) {
+        if (req.getLocationLat() != null && (req.getLocationLat() < -90 || req.getLocationLat() > 90)) {
             errors.rejectValue("locationLat", "Range.lat", "Latitude must be between -90 and 90");
         }
 
-        if (req.locationLon() != null && (req.locationLon() < -180 || req.locationLon() > 180)) {
+        if (req.getLocationLon() != null && (req.getLocationLon() < -180 || req.getLocationLon() > 180)) {
             errors.rejectValue("locationLon", "Range.lon", "Longitude must be between -180 and 180");
         }
 
-        if (req.birthDate() != null && req.birthDate().isAfter(LocalDate.now())) {
+        if (req.getBirthDate() != null && req.getBirthDate().isAfter(LocalDate.now())) {
             errors.rejectValue("birthDate", "Future.birthDate", "Birth date cannot be in the future");
         }
 
-        List<String> interests = req.interests();
+        List<String> interests = req.getInterests();
         if (interests != null) {
             if (interests.size() > 20) {
                 errors.rejectValue("interests", "Max.interests.size", "You can specify at most 20 interests");

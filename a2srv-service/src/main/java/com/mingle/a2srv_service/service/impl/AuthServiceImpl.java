@@ -33,10 +33,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse authenticate(AuthRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("Email not found"));
 
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new InvalidCredentialsException("Invalid password");
         }
 
@@ -48,7 +48,11 @@ public class AuthServiceImpl implements AuthService {
         String token = jwtTokenProvider.resolveToken(bearerToken);
         jwtTokenProvider.validateToken(token);
         String userId = jwtTokenProvider.getUserIdFromToken(token);
-        return new ValidateResponse(true, userId);
+
+        ValidateResponse response = new ValidateResponse();
+        response.setValid(true);
+        response.setUserId(userId);
+        return response;
     }
 
     @Override
@@ -70,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse refreshAccessToken(RefreshTokenRequest request) {
-        String refreshToken = request.refreshToken();
+        String refreshToken = request.getRefreshToken();
         jwtTokenProvider.validateToken(refreshToken);
 
         String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);

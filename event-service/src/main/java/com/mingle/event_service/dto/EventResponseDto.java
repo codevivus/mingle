@@ -1,14 +1,17 @@
 package com.mingle.event_service.dto;
 
+import lombok.Data;
+
 import java.time.LocalDateTime;
 
-public record EventResponseDto(
-        Long id,
-        String title,
-        String description,
-        String city,
-        String venue,
-        LocalDateTime startTime,
-        LocalDateTime endTime,
-        String imageUrl
-) {}
+@Data
+public class EventResponseDto {
+    private Long id;
+    private String title;
+    private String description;
+    private String city;
+    private String venue;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private String imageUrl;
+}

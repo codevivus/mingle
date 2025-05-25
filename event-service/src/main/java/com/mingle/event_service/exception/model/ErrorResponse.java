@@ -1,10 +1,17 @@
 package com.mingle.event_service.exception.model;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
 import java.time.LocalDateTime;
 
-public record ErrorResponse(
-        int status,
-        String message,
-        LocalDateTime timestamp,
-        String path
-) {}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ErrorResponse {
+    private int status;
+    private String message;
+    private LocalDateTime timestamp;
+    private String path;
+}

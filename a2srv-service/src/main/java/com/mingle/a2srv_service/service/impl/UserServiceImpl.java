@@ -34,16 +34,16 @@ public class UserServiceImpl implements UserService {
     public UserResponse register(UserRequest request) {
         validate(request);
 
-        if (userRepository.existsByEmail(request.email())) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Email already in use");
         }
 
-        if (userRepository.existsByUsername(request.username())) {
+        if (userRepository.existsByUsername(request.getUsername())) {
             throw new UsernameAlreadyExistsException("Username already in use");
         }
 
         User user = userMapper.toEntity(request);
-        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setIsOnline(false);
         user.setVerified(false);
 
@@ -60,11 +60,11 @@ public class UserServiceImpl implements UserService {
         validate(request);
         User user = getUserFromToken(bearerToken);
 
-        if (userRepository.existsByEmailAndIdNot(request.email(), user.getId())) {
+        if (userRepository.existsByEmailAndIdNot(request.getEmail(), user.getId())) {
             throw new EmailAlreadyExistsException("Email already in use by another user");
         }
 
-        if (userRepository.existsByUsernameAndIdNot(request.username(), user.getId())) {
+        if (userRepository.existsByUsernameAndIdNot(request.getUsername(), user.getId())) {
             throw new UsernameAlreadyExistsException("Username already in use by another user");
         }
 

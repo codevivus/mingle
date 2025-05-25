@@ -1,9 +1,11 @@
 package com.mingle.a2srv_service.dto;
+import lombok.Data;
 
-public record AuthResponse(
-        String token,
-        String refreshToken,
-        String userId,
-        String username,
-        boolean verified
-) {}
+@Data
+public class AuthResponse {
+    private String token;
+    private String refreshToken;
+    private String userId;
+    private String username;
+    private boolean verified;
+}

@@ -1,6 +1,8 @@
 package com.mingle.a2srv_service.dto;
+import lombok.Data;
 
-public record AuthRequest(
-        String email,
-        String password
-) {}
+@Data
+public class AuthRequest {
+    private String email;
+    private String password;
+}

@@ -1,5 +1,8 @@
 package com.mingle.a2srv_service.dto;
 
-public record RefreshTokenRequest(
-        String refreshToken
-) {}
+import lombok.Data;
+
+@Data
+public class RefreshTokenRequest {
+    private String refreshToken;
+}
