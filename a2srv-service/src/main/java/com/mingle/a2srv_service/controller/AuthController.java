@@ -13,10 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Handles authentication operations including login, token validation,
- * logout and access token renewal via refresh tokens.
- */
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
