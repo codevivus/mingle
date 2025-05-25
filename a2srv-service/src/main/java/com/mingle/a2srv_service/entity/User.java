@@ -24,24 +24,34 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "username")
     private String username;
 
+    @Column(name = "email")
     private String email;
 
+    @Column(name = "password_hash")
     private String passwordHash;
 
+    @Column(name = "name")
     private String name;
 
+    @Column(name = "surname")
     private String surname;
 
+    @Column(name = "age")
     private Integer age;
 
+    @Column(name = "gender")
     private String gender;
 
+    @Column(name = "bio")
     private String bio;
 
+    @Column(name = "photo_url")
     private String photoUrl;
 
+    @Column(name = "city")
     private String city;
 
     @ElementCollection
@@ -61,6 +71,7 @@ public class User {
     @Column(name = "is_online")
     private Boolean isOnline = false;
 
+    @Column(name = "verified")
     private Boolean verified = false;
 
     @Column(name = "birth_date")

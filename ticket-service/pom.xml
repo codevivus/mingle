@@ -79,6 +79,12 @@
 			<artifactId>postgresql</artifactId>
 		</dependency>
 
+		<!-- FeignClient -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+		</dependency>
+
 		<!-- SpringDoc OpenAPI -->
 		<dependency>
 			<groupId>org.springdoc</groupId>

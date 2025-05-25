@@ -42,6 +42,11 @@ public class UserController {
         return ResponseEntity.ok(userService.updateProfile(token, request));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserById(id).get());
+    }
+
     @Operation(summary = "Update password", description = "Changes password for the authenticated user")
     @ApiResponse(responseCode = "200", description = "Password updated successfully")
     @PutMapping("/password")
@@ -65,8 +70,6 @@ public class UserController {
     public ResponseEntity<Boolean> checkUsername(@RequestParam String value) {
         return ResponseEntity.ok(userService.isUsernameTaken(value));
     }
-
-    // 🔍 Search Endpoints
 
     @Operation(summary = "Search users by city", description = "Returns users located in a specific city")
     @ApiResponse(responseCode = "200", description = "Users found by city")

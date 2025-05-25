@@ -5,6 +5,8 @@ import com.mingle.a2srv_service.dto.UserResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Optional;
+
 public interface UserService {
 
     UserResponse register(UserRequest request);
@@ -12,6 +14,8 @@ public interface UserService {
     UserResponse getCurrentUser(String token);
 
     UserResponse updateProfile(String token, UserRequest request);
+
+    Optional<UserResponse> getUserById(Long id);
 
     void updatePassword(String token, String oldPassword, String newPassword);
 

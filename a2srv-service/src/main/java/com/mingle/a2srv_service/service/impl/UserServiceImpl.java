@@ -19,6 +19,7 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -70,6 +71,11 @@ public class UserServiceImpl implements UserService {
 
         userMapper.updateEntity(user, request);
         return userMapper.toResponse(userRepository.save(user));
+    }
+
+    @Override
+    public Optional<UserResponse> getUserById(Long id) {
+        return userRepository.findById(id).map(userMapper::toResponse);
     }
 
     @Override
