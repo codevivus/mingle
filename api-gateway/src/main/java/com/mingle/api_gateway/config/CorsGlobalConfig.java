@@ -2,7 +2,6 @@ package com.mingle.api_gateway.config;
 
 import com.mingle.api_gateway.model.AuthorizationUrls;
 import lombok.RequiredArgsConstructor;
-import lombok.var;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
