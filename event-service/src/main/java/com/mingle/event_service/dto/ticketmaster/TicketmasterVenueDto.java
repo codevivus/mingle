@@ -7,3 +7,4 @@ public class TicketmasterVenueDto {
     private String name;
     private TicketmasterCityDto city;
 }
+

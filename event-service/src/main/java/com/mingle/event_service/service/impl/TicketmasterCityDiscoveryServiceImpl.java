@@ -3,8 +3,8 @@ package com.mingle.event_service.service.impl;
 import com.mingle.event_service.config.TicketmasterProperties;
 import com.mingle.event_service.dto.ticketmaster.TicketmasterCityDto;
 import com.mingle.event_service.dto.ticketmaster.TicketmasterVenueDto;
+import com.mingle.event_service.dto.ticketmaster.response.TicketmasterApiResponse;
 import com.mingle.event_service.dto.ticketmaster.response.TicketmasterPageDto;
-import com.mingle.event_service.dto.ticketmaster.response.TicketmasterVenueResponseWrapper;
 import com.mingle.event_service.service.TicketmasterCityDiscoveryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,7 @@ public class TicketmasterCityDiscoveryServiceImpl implements TicketmasterCityDis
 
         while (page.get() < totalPages) {
             try {
-                TicketmasterVenueResponseWrapper response = webClient.get()
+                TicketmasterApiResponse response = webClient.get()
                         .uri(uriBuilder -> uriBuilder
                                 .path("/venues.json")
                                 .queryParam("countryCode", "TR")
@@ -42,7 +42,7 @@ public class TicketmasterCityDiscoveryServiceImpl implements TicketmasterCityDis
                                 .queryParam("apikey", properties.getKey())
                                 .build())
                         .retrieve()
-                        .bodyToMono(TicketmasterVenueResponseWrapper.class)
+                        .bodyToMono(TicketmasterApiResponse.class)
                         .block();
 
                 if (response == null) {
@@ -65,11 +65,9 @@ public class TicketmasterCityDiscoveryServiceImpl implements TicketmasterCityDis
                 log.info("Processing page {} of {} ({} venues)", currentPage + 1, totalPages, venues.size());
 
                 for (TicketmasterVenueDto venue : venues) {
-                    if (venue.getCity() != null) {
-                        String cityName = venue.getCity().getName();
-                        if (cityName != null && !cityName.isBlank()) {
-                            cities.add(cityName.trim());
-                        }
+                    TicketmasterCityDto city = venue.getCity();
+                    if (city != null && city.getName() != null && !city.getName().isBlank()) {
+                        cities.add(city.getName().trim());
                     }
                 }
 

@@ -2,7 +2,7 @@ package com.mingle.event_service.client;
 
 import com.mingle.event_service.config.TicketmasterProperties;
 import com.mingle.event_service.dto.ticketmaster.TicketmasterEventDto;
-import com.mingle.event_service.dto.ticketmaster.response.TicketmasterVenueResponseWrapper;
+import com.mingle.event_service.dto.ticketmaster.response.TicketmasterApiResponse;
 import com.mingle.event_service.exception.type.RateLimitException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -44,7 +45,9 @@ public class TicketmasterClient {
                                 }
                             }
                             Duration delay = Duration.ofSeconds(delaySeconds);
-                            return reactor.core.publisher.Mono.error(new RateLimitException("Rate limit hit, retry after " + delaySeconds + "s", delay));
+                            return reactor.core.publisher.Mono.error(
+                                    new RateLimitException("Rate limit hit, retry after " + delaySeconds + "s", delay)
+                            );
                         }
                 )
                 .onStatus(
@@ -54,19 +57,28 @@ public class TicketmasterClient {
                             return response.createException();
                         }
                 )
-                .bodyToMono(TicketmasterVenueResponseWrapper.class)
-                .map(TicketmasterVenueResponseWrapper::extractEvents)
-                .retryWhen(Retry.fixedDelay(properties.getRetryMaxAttempts(), Duration.ofSeconds(properties.getRetryDefaultDelaySeconds()))
-                        .filter(throwable -> {
-                            if (throwable instanceof RateLimitException) {
-                                try {
-                                    Thread.sleep(((RateLimitException) throwable).getRetryDelay().toMillis());
-                                } catch (InterruptedException ignored) {
-                                }
-                                return true;
-                            }
-                            return false;
-                        })
+                .bodyToMono(TicketmasterApiResponse.class)
+                .map(response -> {
+                    if (response.getEmbedded() == null || response.getEmbedded().getEvents() == null) {
+                        log.warn("No events found in response for city: {}", city);
+                        return Collections.<TicketmasterEventDto>emptyList();
+                    }
+                    return response.getEmbedded().getEvents();
+                })
+                .retryWhen(Retry.fixedDelay(
+                                        properties.getRetryMaxAttempts(),
+                                        Duration.ofSeconds(properties.getRetryDefaultDelaySeconds())
+                                )
+                                .filter(throwable -> {
+                                    if (throwable instanceof RateLimitException rateLimit) {
+                                        try {
+                                            Thread.sleep(rateLimit.getRetryDelay().toMillis());
+                                        } catch (InterruptedException ignored) {
+                                        }
+                                        return true;
+                                    }
+                                    return false;
+                                })
                 )
                 .block();
     }

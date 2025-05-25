@@ -10,5 +10,5 @@ public class TicketmasterEventDto {
     private String info;
     private TicketmasterDatesDto dates;
     private List<TicketmasterImageDto> images;
-    private TicketmasterEmbeddedDto _embedded;
+    private List<TicketmasterVenueDto> venues;
 }
