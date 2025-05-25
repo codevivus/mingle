@@ -84,6 +84,28 @@ services:
     networks:
       - mingle-net
 
+
+  ticket-service:
+    build:
+      context: ./ticket-service
+      dockerfile: ticket-service.Dockerfile
+    container_name: ticket-service
+    ports:
+      - "8058:8058"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+      a2srv-service:
+        condition: service_healthy
+    healthcheck:
+      test: "exit 0"
+    networks:
+      - mingle-net
+
 networks:
   mingle-net:
     driver: bridge
