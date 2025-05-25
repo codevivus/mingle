@@ -15,6 +15,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -28,12 +31,21 @@ public class JwtTokenAuthenticationFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String requestPath = exchange.getRequest().getPath().toString();
 
+        final String requestId = Optional.ofNullable(
+                        exchange.getRequest().getHeaders().getFirst("X-Request-ID"))
+                .filter(id -> !id.isBlank())
+                .orElse(UUID.randomUUID().toString());
+
+        log.info("[GATEWAY][{}] Incoming request: {}", requestId, requestPath);
+
         if (authorizationUrls.getWhitelistPaths().stream().anyMatch(requestPath::startsWith)) {
+            log.debug("[GATEWAY][{}] Whitelisted path", requestId);
             return chain.filter(exchange);
         }
 
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.warn("[GATEWAY][{}] Missing or malformed Authorization header", requestId);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
@@ -43,18 +55,24 @@ public class JwtTokenAuthenticationFilter implements GlobalFilter, Ordered {
         return tokenBlacklistService.isTokenBlacklisted(token)
                 .flatMap(blacklisted -> {
                     if (blacklisted) {
+                        log.warn("[GATEWAY][{}] Token is blacklisted", requestId);
                         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                         return exchange.getResponse().setComplete();
                     }
 
                     return tokenValidatorService.validateTokenReactive(token)
                             .flatMap(userId -> {
+                                log.info("[GATEWAY][{}] Token validated for userId: {}", requestId, userId);
+
                                 ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                                         .header("X-User-Id", userId)
+                                        .header("X-Request-ID", requestId)
                                         .build();
+
                                 return chain.filter(exchange.mutate().request(mutatedRequest).build());
                             })
                             .onErrorResume(ex -> {
+                                log.error("[GATEWAY][{}] Token validation failed: {}", requestId, ex.getMessage());
                                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                                 return exchange.getResponse().setComplete();
                             });
@@ -66,4 +84,3 @@ public class JwtTokenAuthenticationFilter implements GlobalFilter, Ordered {
         return -1;
     }
 }
-

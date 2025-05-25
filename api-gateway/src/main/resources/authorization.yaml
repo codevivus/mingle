@@ -6,19 +6,49 @@ authorization:
     - /user/check-email
     - /user/check-username
     - /actuator/health
+    - /v3/api-docs
+    - /swagger-ui.html
+    - /swagger-ui/**
+    - /webjars/**
 
   routes:
     - id: auth-service
       path: /auth/**
       uri: lb://a2srv-service
+      filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 5
+            redis-rate-limiter.burstCapacity: 10
+        - name: CircuitBreaker
+          args:
+            name: authCB
+            fallbackUri: forward:/fallback/auth
 
     - id: user-service
       path: /user/**
       uri: lb://a2srv-service
-      
+      filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 5
+            redis-rate-limiter.burstCapacity: 10
+
     - id: event-service
       path: /event/**
       uri: lb://event-service
+
+    - id: swagger-docs
+      path: /v3/api-docs/**
+      uri: lb://a2srv-service
+
+    - id: swagger-ui
+      path: /swagger-ui/**
+      uri: lb://a2srv-service
+
+    - id: swagger-static
+      path: /webjars/**
+      uri: lb://a2srv-service
 
   cors:
     allowed-origins:
@@ -28,6 +58,8 @@ authorization:
       - POST
       - PUT
       - DELETE
+      - OPTIONS
     allowed-headers:
       - Content-Type
       - Authorization
+      - X-Request-ID

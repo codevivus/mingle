@@ -45,6 +45,13 @@
 			<artifactId>spring-cloud-starter-gateway</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.15</version>
+		</dependency>
+
+
 		<!-- WebFlux -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
