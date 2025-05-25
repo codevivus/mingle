@@ -2,9 +2,11 @@ package com.mingle.a2srv_service.service.impl;
 
 import com.mingle.a2srv_service.dto.AuthRequest;
 import com.mingle.a2srv_service.dto.AuthResponse;
+import com.mingle.a2srv_service.dto.RefreshTokenRequest;
 import com.mingle.a2srv_service.dto.ValidateResponse;
 import com.mingle.a2srv_service.entity.User;
 import com.mingle.a2srv_service.exception.type.InvalidCredentialsException;
+import com.mingle.a2srv_service.exception.type.UserNotFoundException;
 import com.mingle.a2srv_service.mapper.AuthMapper;
 import com.mingle.a2srv_service.repository.UserRepository;
 import com.mingle.a2srv_service.security.JwtTokenProvider;
@@ -38,13 +40,13 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException("Invalid password");
         }
 
-        String token = jwtTokenProvider.generateToken(user.getId().toString());
-        return authMapper.toResponse(user, token);
+        return createAuthResponse(user);
     }
 
     @Override
     public ValidateResponse validate(String bearerToken) {
         String token = jwtTokenProvider.resolveToken(bearerToken);
+        jwtTokenProvider.validateToken(token);
         String userId = jwtTokenProvider.getUserIdFromToken(token);
         return new ValidateResponse(true, userId);
     }
@@ -52,6 +54,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout(String bearerToken) {
         String token = jwtTokenProvider.resolveToken(bearerToken);
+        jwtTokenProvider.validateToken(token);
         long exp = jwtTokenProvider.getRemainingValidity(token);
 
         webClient.post()
@@ -63,6 +66,26 @@ public class AuthServiceImpl implements AuthService {
                 .retrieve()
                 .bodyToMono(Void.class)
                 .block();
+    }
 
+    @Override
+    public AuthResponse refreshAccessToken(RefreshTokenRequest request) {
+        String refreshToken = request.refreshToken();
+        jwtTokenProvider.validateToken(refreshToken);
+
+        String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        Long id = Long.parseLong(userId);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        String newAccessToken = jwtTokenProvider.generateToken(userId);
+        return authMapper.toResponse(user, newAccessToken, refreshToken);
+    }
+
+    private AuthResponse createAuthResponse(User user) {
+        String accessToken = jwtTokenProvider.generateToken(user.getId().toString());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId().toString());
+        return authMapper.toResponse(user, accessToken, refreshToken);
     }
 }

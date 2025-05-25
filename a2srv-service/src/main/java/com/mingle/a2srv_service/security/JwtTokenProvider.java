@@ -13,48 +13,75 @@ import java.util.Date;
 public class JwtTokenProvider {
 
     private final Key key;
-    private final long expirationMillis;
+    private final long accessTokenExpirationMillis;
+    private final long refreshTokenExpirationMillis;
 
-    public JwtTokenProvider(@Value("${jwt.secret}") String secret,
-                            @Value("${jwt.expiration}") long expirationMillis) {
+    public JwtTokenProvider(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration}") long accessTokenExpirationMillis,
+            @Value("${jwt.refresh-expiration}") long refreshTokenExpirationMillis
+    ) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
-        this.expirationMillis = expirationMillis;
+        this.accessTokenExpirationMillis = accessTokenExpirationMillis;
+        this.refreshTokenExpirationMillis = refreshTokenExpirationMillis;
     }
 
     public String generateToken(String userId) {
         return Jwts.builder()
                 .setSubject(userId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpirationMillis))
                 .signWith(key)
                 .compact();
     }
 
-    public String resolveToken(String bearerToken) {
-        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            throw new TokenValidationException("Missing or invalid Bearer token");
-        }
-        return bearerToken.substring(7);
+    public String generateRefreshToken(String userId) {
+        return Jwts.builder()
+                .setSubject(userId)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMillis))
+                .signWith(key)
+                .compact();
     }
 
-    public Jws<Claims> validateToken(String token) {
+    public String getUserIdFromToken(String token) {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
-                    .parseClaimsJws(token);
-        } catch (JwtException | IllegalArgumentException ex) {
-            throw new TokenValidationException("Invalid or expired token: " + ex.getMessage());
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject();
+        } catch (JwtException e) {
+            throw new TokenValidationException("Invalid token");
         }
     }
 
-    public String getUserIdFromToken(String token) {
-        return validateToken(token).getBody().getSubject();
+    public void validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+        } catch (JwtException e) {
+            throw new TokenValidationException("Invalid token");
+        }
+    }
+
+    public String resolveToken(String bearerToken) {
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        throw new TokenValidationException("Authorization header malformed");
     }
 
     public long getRemainingValidity(String token) {
-        Date expiration = validateToken(token).getBody().getExpiration();
-        return (expiration.getTime() - System.currentTimeMillis()) / 1000;
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.getExpiration().getTime() - System.currentTimeMillis();
+        } catch (JwtException e) {
+            throw new TokenValidationException("Invalid token");
+        }
     }
-
 }

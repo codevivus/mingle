@@ -4,13 +4,16 @@ import com.mingle.a2srv_service.dto.AuthResponse;
 import com.mingle.a2srv_service.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
 
 @Mapper(componentModel = "spring")
 public interface AuthMapper {
-
-    @Mapping(target = "token", source = "token")
-    @Mapping(target = "userId", expression = "java(user.getId().toString())")
-    @Mapping(target = "username", source = "user.username")
-    @Mapping(target = "verified", source = "user.verified")
-    AuthResponse toResponse(User user, String token);
+    @Mappings({
+            @Mapping(target = "token", source = "accessToken"),
+            @Mapping(target = "refreshToken", source = "refreshToken"),
+            @Mapping(target = "userId", expression = "java(user.getId().toString())"),
+            @Mapping(target = "username", source = "user.username"),
+            @Mapping(target = "verified", source = "user.verified")
+    })
+    AuthResponse toResponse(User user, String accessToken, String refreshToken);
 }
