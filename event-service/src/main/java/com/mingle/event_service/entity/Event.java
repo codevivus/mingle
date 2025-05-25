@@ -1,4 +1,4 @@
-package com.mingle.event_service.model;
+package com.mingle.event_service.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

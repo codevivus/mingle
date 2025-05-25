@@ -7,7 +7,7 @@ import com.mingle.event_service.dto.ticketmaster.TicketmasterEventDto;
 import com.mingle.event_service.exception.type.ExternalApiException;
 import com.mingle.event_service.mapper.EventMapper;
 import com.mingle.event_service.mapper.TicketmasterEventManualMapper;
-import com.mingle.event_service.model.Event;
+import com.mingle.event_service.entity.Event;
 import com.mingle.event_service.repository.EventRepository;
 import com.mingle.event_service.service.EventService;
 import lombok.RequiredArgsConstructor;

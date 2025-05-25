@@ -1,6 +1,6 @@
 package com.mingle.api_gateway.filter;
 
-import com.mingle.api_gateway.model.AuthorizationUrls;
+import com.mingle.api_gateway.entity.AuthorizationUrls;
 import com.mingle.api_gateway.service.TokenBlacklistService;
 import com.mingle.api_gateway.service.TokenValidatorService;
 import lombok.RequiredArgsConstructor;

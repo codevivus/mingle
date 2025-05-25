@@ -2,7 +2,7 @@ package com.mingle.event_service.mapper;
 
 import com.mingle.event_service.dto.ticketmaster.TicketmasterEventDto;
 import com.mingle.event_service.dto.ticketmaster.TicketmasterVenueDto;
-import com.mingle.event_service.model.Event;
+import com.mingle.event_service.entity.Event;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

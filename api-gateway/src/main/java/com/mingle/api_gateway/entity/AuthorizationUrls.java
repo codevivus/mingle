@@ -1,4 +1,4 @@
-package com.mingle.api_gateway.model;
+package com.mingle.api_gateway.entity;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

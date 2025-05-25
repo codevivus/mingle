@@ -1,7 +1,7 @@
 package com.mingle.api_gateway.service.impl;
 
 import com.mingle.api_gateway.exception.type.InvalidTokenException;
-import com.mingle.api_gateway.model.ValidateResponse;
+import com.mingle.api_gateway.entity.ValidateResponse;
 import com.mingle.api_gateway.service.TokenValidatorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

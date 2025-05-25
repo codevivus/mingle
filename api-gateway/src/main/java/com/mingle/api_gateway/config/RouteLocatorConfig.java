@@ -1,8 +1,9 @@
 package com.mingle.api_gateway.config;
 
-import com.mingle.api_gateway.model.AuthorizationRoute;
-import com.mingle.api_gateway.model.AuthorizationUrls;
+import com.mingle.api_gateway.entity.AuthorizationRoute;
+import com.mingle.api_gateway.entity.AuthorizationUrls;
 import lombok.RequiredArgsConstructor;
+import lombok.var;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
