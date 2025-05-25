@@ -3,6 +3,7 @@ package com.mingle.event_service.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import java.util.List;
 
 @Data
 @Component
@@ -14,4 +15,5 @@ public class TicketmasterProperties {
     private String importCron;
     private int retryMaxAttempts;
     private int retryDefaultDelaySeconds;
+    private List<String> cities;
 }

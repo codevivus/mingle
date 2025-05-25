@@ -25,12 +25,13 @@ public class TicketmasterVenueResponseWrapper {
 
         return embedded.getVenues().stream()
                 .map(venue -> {
+                    TicketmasterEmbeddedDto embeddedDto = new TicketmasterEmbeddedDto();
+                    embeddedDto.setVenues(List.of(venue));
                     TicketmasterEventDto dto = new TicketmasterEventDto();
-                    dto.setCity(venue.getCity() != null ? venue.getCity().getName() : null);
-                    dto.setVenue(venue.getName());
-                    // Gerekirse diğer alanlar da burada setlenebilir
+                    dto.set_embedded(embeddedDto);
                     return dto;
                 })
                 .collect(Collectors.toList());
     }
+
 }

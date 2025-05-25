@@ -13,13 +13,13 @@ import java.time.LocalDateTime;
 public class EventRequestValidator {
 
     public void validate(EventRequestDto dto) {
-        validateTitle(dto.title());
-        validateDescription(dto.description());
-        validateCity(dto.city());
-        validateVenue(dto.venue());
-        validateStartTime(dto.startTime());
-        validateEndTime(dto.startTime(), dto.endTime());
-        validateImageUrl(dto.imageUrl());
+        validateTitle(dto.getTitle());
+        validateDescription(dto.getDescription());
+        validateCity(dto.getCity());
+        validateVenue(dto.getVenue());
+        validateStartTime(dto.getStartTime());
+        validateEndTime(dto.getStartTime(), dto.getEndTime());
+        validateImageUrl(dto.getImageUrl());
     }
 
     private void validateTitle(String title) {
