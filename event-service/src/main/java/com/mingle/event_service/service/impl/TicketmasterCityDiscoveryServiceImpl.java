@@ -10,8 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import java.util.concurrent.atomic.AtomicInteger;
+
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,6 +29,8 @@ public class TicketmasterCityDiscoveryServiceImpl implements TicketmasterCityDis
         AtomicInteger page = new AtomicInteger(0);
         int totalPages = 1;
 
+        log.info("Starting to fetch cities from Ticketmaster...");
+
         while (page.get() < totalPages) {
             try {
                 TicketmasterVenueResponseWrapper response = webClient.get()
@@ -42,28 +45,45 @@ public class TicketmasterCityDiscoveryServiceImpl implements TicketmasterCityDis
                         .bodyToMono(TicketmasterVenueResponseWrapper.class)
                         .block();
 
-                if (response == null || response.getEmbedded() == null) break;
+                if (response == null) {
+                    log.warn("Null response received from Ticketmaster for page {}", page.get());
+                    break;
+                }
 
+                if (response.getEmbedded() == null || response.getEmbedded().getVenues() == null) {
+                    log.warn("No embedded venues found in response for page {}", page.get());
+                    break;
+                }
+
+                List<TicketmasterVenueDto> venues = response.getEmbedded().getVenues();
+
+                int currentPage = page.get();
                 totalPages = Optional.ofNullable(response.getPage())
                         .map(TicketmasterPageDto::getTotalPages)
                         .orElse(1);
 
-                response.getEmbedded().getVenues().stream()
-                        .map(TicketmasterVenueDto::getCity)  // lambda kullanıldı
-                        .filter(Objects::nonNull)
-                        .map(TicketmasterCityDto::getName)
-                        .filter(name -> name != null && !name.isBlank())
-                        .map(String::trim)
-                        .forEach(cities::add);
+                log.info("Processing page {} of {} ({} venues)", currentPage + 1, totalPages, venues.size());
+
+                for (TicketmasterVenueDto venue : venues) {
+                    if (venue.getCity() != null) {
+                        String cityName = venue.getCity().getName();
+                        if (cityName != null && !cityName.isBlank()) {
+                            cities.add(cityName.trim());
+                        }
+                    }
+                }
 
                 page.incrementAndGet();
 
             } catch (Exception e) {
-                log.warn("Failed to fetch cities from Ticketmaster (page {}): {}", page.get(), e.getMessage());
+                log.warn("Failed to fetch cities from Ticketmaster (page {}): {}", page.get(), e.getMessage(), e);
                 break;
             }
         }
 
-        return cities.stream().sorted().collect(Collectors.toList());
+        List<String> sorted = cities.stream().sorted().collect(Collectors.toList());
+        log.info("Fetched {} unique cities from Ticketmaster", sorted.size());
+
+        return sorted;
     }
 }
