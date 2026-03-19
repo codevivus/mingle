@@ -50,6 +50,10 @@ authorization:
       path: /webjars/**
       uri: lb://a2srv-service
 
+    - id: ticket-service
+      path: /ticket/**
+      uri: lb://ticket-service
+
   cors:
     allowed-origins:
       - https://localhost:4200

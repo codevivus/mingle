@@ -10,7 +10,10 @@ services:
     ports:
       - "6379:6379"
     healthcheck:
-      test: "exit 0"
+      test: ["CMD", "redis-cli", "-a", "admin", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - mingle-net
 
@@ -22,8 +25,10 @@ services:
     ports:
       - "8761:8761"
     healthcheck:
-      test: "exit 0"
-      retries: 3
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     networks:
       - mingle-net
 
@@ -40,7 +45,10 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: "exit 0"
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     networks:
       - mingle-net
 
@@ -59,7 +67,10 @@ services:
       api-gateway:
         condition: service_healthy
     healthcheck:
-      test: "exit 0"
+      test: ["CMD", "curl", "-f", "http://localhost:8051/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     networks:
       - mingle-net
 
@@ -70,6 +81,8 @@ services:
     container_name: event-service
     ports:
       - "8090:8090"
+    environment:
+      - TICKETMASTER_API_KEY=${TICKETMASTER_API_KEY:-8hJOZzccB7zG4slE2HxkTg9tjG1E8uyg}
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -80,7 +93,10 @@ services:
       a2srv-service:
         condition: service_healthy
     healthcheck:
-      test: "exit 0"
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     networks:
       - mingle-net
 
@@ -102,7 +118,10 @@ services:
       a2srv-service:
         condition: service_healthy
     healthcheck:
-      test: "exit 0"
+      test: ["CMD", "curl", "-f", "http://localhost:8058/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     networks:
       - mingle-net
 

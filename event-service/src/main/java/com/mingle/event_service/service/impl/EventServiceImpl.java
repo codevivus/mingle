@@ -5,6 +5,7 @@ import com.mingle.event_service.dto.EventRequestDto;
 import com.mingle.event_service.dto.EventResponseDto;
 import com.mingle.event_service.dto.ticketmaster.TicketmasterEventDto;
 import com.mingle.event_service.exception.type.ExternalApiException;
+import com.mingle.event_service.exception.type.NotFoundException;
 import com.mingle.event_service.mapper.EventMapper;
 import com.mingle.event_service.mapper.TicketmasterEventManualMapper;
 import com.mingle.event_service.entity.Event;
@@ -38,7 +39,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventResponseDto getEventById(Long id) {
         Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
+                .orElseThrow(() -> new NotFoundException("Event not found with id: " + id));
         return eventMapper.toDto(event);
     }
 
@@ -51,7 +52,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventResponseDto updateEvent(Long id, EventRequestDto dto) {
         Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
+                .orElseThrow(() -> new NotFoundException("Event not found with id: " + id));
         eventMapper.updateEventFromDto(dto, event);
         return eventMapper.toDto(eventRepository.save(event));
     }
