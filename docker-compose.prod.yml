@@ -69,6 +69,7 @@ services:
     ports: !reset []
     restart: unless-stopped
     environment:
+      SWAGGER_ENABLED: "false"
       WS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?Set CORS_ALLOWED_ORIGINS in your .env file}
 
   mailhog:
