@@ -1,0 +1,79 @@
+# Production overlay. Use it on top of the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Only Caddy (HTTPS on 80/443) is reachable from outside. Every other port is closed, Swagger is off,
+# MailHog is not started and a real SMTP provider is required. See docs/DEPLOYMENT.md.
+services:
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in your .env file - the public host name, for example app.example.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - mingle-net
+
+  postgres:
+    restart: unless-stopped
+
+  redis:
+    restart: unless-stopped
+
+  eureka-server:
+    ports: !reset []
+    restart: unless-stopped
+
+  api-gateway:
+    ports: !reset []
+    restart: unless-stopped
+    environment:
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?Set CORS_ALLOWED_ORIGINS in your .env file, for example https://app.example.com}
+
+  a2srv-service:
+    ports: !reset []
+    restart: unless-stopped
+    depends_on: !override
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+    environment:
+      SWAGGER_ENABLED: "false"
+      SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST (and the other SMTP_* values) for a real mail provider}
+      APP_PUBLIC_URL: https://${DOMAIN:?Set DOMAIN in your .env file}
+
+  event-service:
+    ports: !reset []
+    restart: unless-stopped
+    environment:
+      SWAGGER_ENABLED: "false"
+
+  ticket-service:
+    ports: !reset []
+    restart: unless-stopped
+    environment:
+      SWAGGER_ENABLED: "false"
+
+  match-service:
+    ports: !reset []
+    restart: unless-stopped
+    environment:
+      WS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?Set CORS_ALLOWED_ORIGINS in your .env file}
+
+  mailhog:
+    profiles: ["dev"]
+
+volumes:
+  caddy-data:
+  caddy-config:
