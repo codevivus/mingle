@@ -164,7 +164,22 @@ cd event-service
 ./mvnw spring-boot:run
 ```
 
-Configuration comes from environment variables (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `INTERNAL_API_KEY`, `REDIS_PASSWORD`, `TICKETMASTER_API_KEY`, `CHAT_LOCK_AFTER_HOURS`, `CHAT_READ_ONLY_DAYS`, `EVENT_TIME_ZONE`, `ADMIN_EMAIL`, `WS_ALLOWED_ORIGINS`) with local-development defaults in each service's `application.properties`.
+Configuration comes from environment variables, with local-development defaults in each service's `application.properties`. Copy `.env.example` to `.env` to set them for Docker Compose.
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `JWT_SECRET` | yes | none | HMAC signing key, at least 32 characters (`openssl rand -base64 32`) |
+| `INTERNAL_API_KEY` | yes | empty | Shared secret for service-to-service calls to the gateway's `/internal` endpoints |
+| `DB_URL` | no | `jdbc:postgresql://localhost:5432/mingle` | PostgreSQL connection URL |
+| `DB_USERNAME` / `DB_PASSWORD` | no | `mingle` / `mingle_local` | Database credentials (local development only) |
+| `REDIS_HOST` / `REDIS_PASSWORD` | no | `localhost` / `mingle_local` | Redis connection |
+| `TICKETMASTER_API_KEY` | no | empty | Enables the nightly Ticketmaster event import |
+| `ADMIN_EMAIL` | no | empty | This registered account is promoted to `ADMIN` at startup (register it first) |
+| `EVENT_TIME_ZONE` | no | `Europe/Istanbul` | Time zone used for event dates |
+| `CHAT_LOCK_AFTER_HOURS` | no | `24` | Hours after an event before its chat locks |
+| `CHAT_READ_ONLY_DAYS` | no | `30` | Days a locked chat stays readable |
+| `CHAT_UNLOCK_PROVIDER` | no | `stub` | Payment provider for chat unlock; `stub` grants every unlock |
+| `WS_ALLOWED_ORIGINS` | no | `https://localhost:4200,http://localhost:4200` | Allowed WebSocket origins |
 
 ---
 
