@@ -54,6 +54,14 @@ authorization:
       path: /match/**
       uri: lb://match-service
 
+    - id: chat-service
+      path: /chat/**
+      uri: lb://match-service
+
+    - id: chat-websocket
+      path: /ws/**
+      uri: lb:ws://match-service
+
     - id: ticket-service
       path: /ticket/**
       uri: lb://ticket-service

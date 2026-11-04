@@ -51,6 +51,13 @@ public class JwtTokenAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if ((authHeader == null || authHeader.isBlank()) && requestPath.startsWith("/ws")) {
+            // Browsers cannot set headers on a WebSocket handshake, so accept the token as a query parameter.
+            String queryToken = exchange.getRequest().getQueryParams().getFirst("access_token");
+            if (queryToken != null && !queryToken.isBlank()) {
+                authHeader = "Bearer " + queryToken;
+            }
+        }
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.warn("[GATEWAY][{}] Missing or malformed Authorization header", requestId);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
