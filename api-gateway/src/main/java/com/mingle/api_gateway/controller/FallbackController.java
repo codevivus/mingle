@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,13 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class FallbackController {
 
     @Operation(
-            summary = "Fallback for auth service",
-            description = "Returns a message when the auth service is unavailable"
+            summary = "Fallback for an unavailable service",
+            description = "Reached through the circuit breaker forward, for any HTTP method"
     )
-    @ApiResponse(responseCode = "503", description = "Auth service is down")
-    @GetMapping("/auth")
-    public ResponseEntity<String> fallbackAuth() {
+    @ApiResponse(responseCode = "503", description = "The service is down")
+    @RequestMapping("/{service}")
+    public ResponseEntity<String> fallback(@PathVariable String service) {
+        String name = service.substring(0, 1).toUpperCase() + service.substring(1);
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Auth service is temporarily unavailable");
+                .body(name + " service is temporarily unavailable");
     }
 }
