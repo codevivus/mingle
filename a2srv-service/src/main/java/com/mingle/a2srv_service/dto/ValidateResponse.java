@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class ValidateResponse {
     private boolean valid;
     private String userId;
+    private String role;
 }

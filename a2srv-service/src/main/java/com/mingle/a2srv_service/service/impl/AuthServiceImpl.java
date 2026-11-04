@@ -1,5 +1,6 @@
 package com.mingle.a2srv_service.service.impl;
 
+import com.mingle.a2srv_service.entity.Role;
 import com.mingle.a2srv_service.dto.AuthRequest;
 import com.mingle.a2srv_service.dto.AuthResponse;
 import com.mingle.a2srv_service.dto.RefreshTokenRequest;
@@ -52,6 +53,11 @@ public class AuthServiceImpl implements AuthService {
         ValidateResponse response = new ValidateResponse();
         response.setValid(true);
         response.setUserId(userId);
+        // Read the role from the database on every validation so a demotion takes effect immediately.
+        response.setRole(userRepository.findById(Long.parseLong(userId))
+                .map(User::getRole)
+                .orElse(Role.USER)
+                .name());
         return response;
     }
 

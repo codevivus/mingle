@@ -40,7 +40,14 @@ public class JwtTokenAuthenticationFilter implements GlobalFilter, Ordered {
 
         if (authorizationUrls.getWhitelistPaths().stream().anyMatch(requestPath::startsWith)) {
             log.debug("[GATEWAY][{}] Whitelisted path", requestId);
-            return chain.filter(exchange);
+            // Never let a client-supplied identity header reach a downstream service.
+            ServerHttpRequest stripped = exchange.getRequest().mutate()
+                    .headers(h -> {
+                        h.remove("X-User-Id");
+                        h.remove("X-User-Role");
+                    })
+                    .build();
+            return chain.filter(exchange.mutate().request(stripped).build());
         }
 
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
@@ -61,11 +68,13 @@ public class JwtTokenAuthenticationFilter implements GlobalFilter, Ordered {
                     }
 
                     return tokenValidatorService.validateTokenReactive(token)
-                            .flatMap(userId -> {
+                            .flatMap(validated -> {
+                                String userId = validated.getUserId();
                                 log.info("[GATEWAY][{}] Token validated for userId: {}", requestId, userId);
 
                                 ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                                         .header("X-User-Id", userId)
+                                        .header("X-User-Role", validated.getRole() != null ? validated.getRole() : "USER")
                                         .header("X-Request-ID", requestId)
                                         .build();
 

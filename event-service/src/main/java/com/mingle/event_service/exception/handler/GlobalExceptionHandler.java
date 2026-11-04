@@ -1,6 +1,7 @@
 package com.mingle.event_service.exception.handler;
 
 import com.mingle.event_service.exception.model.ErrorResponse;
+import com.mingle.event_service.exception.type.ForbiddenException;
 import com.mingle.event_service.exception.type.NotFoundException;
 import com.mingle.event_service.exception.type.ValidationException;
 import com.mingle.event_service.exception.type.ExternalApiException;
@@ -18,6 +19,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex, HttpServletRequest req) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), req.getRequestURI());
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), req.getRequestURI());
     }
 
     @ExceptionHandler(ValidationException.class)

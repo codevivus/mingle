@@ -20,7 +20,7 @@ public class TokenValidatorServiceImpl implements TokenValidatorService {
     private String validateUrl;
 
     @Override
-    public Mono<String> validateTokenReactive(String token) {
+    public Mono<ValidateResponse> validateTokenReactive(String token) {
         return webClient.get()
                 .uri(validateUrl)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -28,7 +28,7 @@ public class TokenValidatorServiceImpl implements TokenValidatorService {
                 .bodyToMono(ValidateResponse.class)
                 .flatMap(response -> {
                     if (response.isValid()) {
-                        return Mono.just(response.getUserId());
+                        return Mono.just(response);
                     } else {
                         return Mono.error(new InvalidTokenException("Token validation failed"));
                     }
