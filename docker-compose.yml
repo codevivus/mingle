@@ -1,16 +1,30 @@
-version: '3.8'
-
 services:
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: mingle
+      POSTGRES_USER: ${DB_USERNAME:-mingle}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mingle_local}
+    volumes:
+      - mingle-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-mingle} -d mingle"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mingle-net
 
   redis:
     image: redis:7
     container_name: redis
     restart: always
-    command: ["redis-server", "--requirepass", "admin"]
-    ports:
-      - "6379:6379"
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-mingle_local}"]
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "admin", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-mingle_local}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,12 +37,13 @@ services:
       dockerfile: eureka-server.Dockerfile
     container_name: eureka-server
     ports:
-      - "8761:8761"
+      - "127.0.0.1:8761:8761"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health > /dev/null || exit 1"]
       interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - mingle-net
 
@@ -39,16 +54,20 @@ services:
     container_name: api-gateway
     ports:
       - "8080:8080"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-mingle_local}
     depends_on:
       eureka-server:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health > /dev/null || exit 1"]
       interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - mingle-net
 
@@ -58,19 +77,25 @@ services:
       dockerfile: a2srv-service.Dockerfile
     container_name: a2srv-service
     ports:
-      - "8051:8051"
+      - "127.0.0.1:8051:8051"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/mingle
+      DB_USERNAME: ${DB_USERNAME:-mingle}
+      DB_PASSWORD: ${DB_PASSWORD:-mingle_local}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file - see .env.example}
     depends_on:
-      eureka-server:
+      postgres:
         condition: service_healthy
-      redis:
+      eureka-server:
         condition: service_healthy
       api-gateway:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8051/actuator/health"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8051/actuator/health > /dev/null || exit 1"]
       interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - mingle-net
 
@@ -80,26 +105,29 @@ services:
       dockerfile: event-service.Dockerfile
     container_name: event-service
     ports:
-      - "8090:8090"
+      - "127.0.0.1:8090:8090"
     environment:
-      - TICKETMASTER_API_KEY=${TICKETMASTER_API_KEY:-8hJOZzccB7zG4slE2HxkTg9tjG1E8uyg}
+      DB_URL: jdbc:postgresql://postgres:5432/mingle
+      DB_USERNAME: ${DB_USERNAME:-mingle}
+      DB_PASSWORD: ${DB_PASSWORD:-mingle_local}
+      TICKETMASTER_API_KEY: ${TICKETMASTER_API_KEY:-}
     depends_on:
-      eureka-server:
+      postgres:
         condition: service_healthy
-      redis:
+      eureka-server:
         condition: service_healthy
       api-gateway:
         condition: service_healthy
       a2srv-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8090/actuator/health > /dev/null || exit 1"]
       interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - mingle-net
-
 
   ticket-service:
     build:
@@ -107,23 +135,31 @@ services:
       dockerfile: ticket-service.Dockerfile
     container_name: ticket-service
     ports:
-      - "8058:8058"
+      - "127.0.0.1:8058:8058"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/mingle
+      DB_USERNAME: ${DB_USERNAME:-mingle}
+      DB_PASSWORD: ${DB_PASSWORD:-mingle_local}
     depends_on:
-      eureka-server:
+      postgres:
         condition: service_healthy
-      redis:
+      eureka-server:
         condition: service_healthy
       api-gateway:
         condition: service_healthy
       a2srv-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8058/actuator/health"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8058/actuator/health > /dev/null || exit 1"]
       interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - mingle-net
+
+volumes:
+  mingle-postgres-data:
 
 networks:
   mingle-net:

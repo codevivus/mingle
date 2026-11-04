@@ -26,18 +26,18 @@ Find events, get tickets, and meet people who are going to the same place.
 | Service | Port | Responsibility |
 |---|---|---|
 | `eureka-server` | 8761 | Service discovery (Netflix Eureka) |
-| `api-gateway` | 8080 | Single entry point: routing, JWT validation, Redis rate limiting, circuit breakers, token blacklist |
+| `api-gateway` | 8080 | Single entry point: routing, JWT validation, token blacklist |
 | `a2srv-service` | 8051 | Authentication and user profiles |
 | `event-service` | 8090 | Event catalogue, imported on a schedule from the Ticketmaster Discovery API |
 | `ticket-service` | 8058 | Users' tickets for events (calls `event-service` via Feign) |
-| `redis` | 6379 | Rate-limit buckets and revoked-token blacklist |
+| `postgres` | — | Shared PostgreSQL 16 database |
+| `redis` | — | Revoked-token blacklist |
 
 All services register with Eureka, and the gateway forwards traffic with `lb://<service-name>` load-balanced routes defined in [`api-gateway/src/main/resources/authorization.yaml`](api-gateway/src/main/resources/authorization.yaml).
 
 ## Features
 
 - **Gateway security** — a global JWT filter validates tokens against `a2srv-service`; public paths (login, registration, health, API docs) are whitelisted.
-- **Resilience** — Redis-backed request rate limiting on auth/user routes, with a circuit-breaker route filter and fallback endpoints configured for auth.
 - **Token lifecycle** — access and refresh tokens, logout with server-side token blacklisting.
 - **User profiles** — registration with email / username availability checks, profile and password updates, and search by city, age range, gender, goal, date preference, online status, recency, verification and proximity.
 - **Events** — CRUD and listing, city list, manual import trigger, nightly Ticketmaster import (03:00) and cleanup of expired events (04:00).
@@ -56,7 +56,7 @@ All requests go through the gateway at `http://localhost:8080`.
 | Events | `GET/POST /event` · `GET/PUT/DELETE /event/{id}` · `GET /event/cities` · `POST /event/import` |
 | Tickets | `POST /ticket/add` · `GET /ticket` · `GET/DELETE /ticket/{id}` · `GET /ticket/user/{userId}` · `GET /ticket/event/{eventId}` |
 
-Swagger UI per service: `http://localhost:<port>/swagger-ui.html`.
+Swagger UI per service (local only): `http://localhost:<port>/swagger-ui.html`.
 
 ## Tech Stack
 
@@ -67,7 +67,7 @@ Swagger UI per service: `http://localhost:<port>/swagger-ui.html`.
 | Discovery | Netflix Eureka |
 | Security | Spring Security · JJWT |
 | Persistence | Spring Data JPA · PostgreSQL |
-| Caching / limits | Redis 7 |
+| Token blacklist | Redis 7 |
 | Inter-service calls | OpenFeign |
 | Mapping | MapStruct · Lombok |
 | Docs | springdoc-openapi |
@@ -80,7 +80,6 @@ Each service follows the same package layout: `controller`, `service`, `reposito
 ### Prerequisites
 
 - Docker and Docker Compose
-- A PostgreSQL database named `mingle` reachable from containers at `host.docker.internal:5432`
 - (Optional) A Ticketmaster API key for event imports
 
 ### Run
@@ -89,11 +88,11 @@ Each service follows the same package layout: `controller`, `service`, `reposito
 git clone https://github.com/codevivus/mingle.git
 cd mingle
 
-export TICKETMASTER_API_KEY=<your-key>
+cp .env.example .env   # set JWT_SECRET (and TICKETMASTER_API_KEY if you have one)
 docker compose up -d --build
 ```
 
-Services start in dependency order (Redis → Eureka → Gateway → auth → event / ticket) using health checks.
+Services start in dependency order (PostgreSQL / Redis → Eureka → Gateway → auth → event / ticket) using health checks. Only the gateway is published on all interfaces; the other service ports are bound to `127.0.0.1` for local debugging.
 
 - Gateway: <http://localhost:8080>
 - Eureka dashboard: <http://localhost:8761>
@@ -105,4 +104,4 @@ cd event-service
 ./mvnw spring-boot:run
 ```
 
-Database credentials, JWT settings and the Eureka URL are configured in each service's `src/main/resources/application.properties`.
+Configuration comes from environment variables (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `REDIS_PASSWORD`, `TICKETMASTER_API_KEY`) with local-development defaults in each service's `application.properties`.
