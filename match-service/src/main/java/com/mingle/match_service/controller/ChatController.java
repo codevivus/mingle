@@ -46,6 +46,19 @@ public class ChatController {
         return dispatcher.send(callerId, id, request.content());
     }
 
+    /** Body is optional: {@code {"upToMessageId": 42}}; without it everything is marked read. */
+    @PostMapping("/{id}/read")
+    public ConversationResponse markRead(@RequestHeader(USER_HEADER) Long callerId,
+                                         @PathVariable Long id,
+                                         @RequestBody(required = false) java.util.Map<String, Long> body) {
+        return chatService.markRead(callerId, id, body == null ? null : body.get("upToMessageId"));
+    }
+
+    @GetMapping("/unread-count")
+    public java.util.Map<String, Long> unreadCount(@RequestHeader(USER_HEADER) Long callerId) {
+        return java.util.Map.of("count", chatService.unreadTotal(callerId));
+    }
+
     @PostMapping("/{id}/unlock")
     public ConversationResponse unlock(@RequestHeader(USER_HEADER) Long callerId, @PathVariable Long id) {
         return chatService.unlock(callerId, id);

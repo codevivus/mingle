@@ -129,6 +129,29 @@ public class ChatService {
         return toResponse(conversationRepository.save(conversation), callerId);
     }
 
+    /**
+     * Marks the history as read up to {@code upToMessageId}, or up to the newest message when null. It never
+     * moves backwards and never past the newest message.
+     */
+    public ConversationResponse markRead(Long callerId, Long conversationId, Long upToMessageId) {
+        Conversation conversation = participantConversation(callerId, conversationId);
+        long newest = messageRepository.findFirstByConversationIdOrderByIdDesc(conversationId)
+                .map(Message::getId).orElse(0L);
+        long target = upToMessageId == null ? newest : Math.min(Math.max(upToMessageId, 0L), newest);
+        conversation.markRead(callerId, target);
+        return toResponse(conversationRepository.save(conversation), callerId);
+    }
+
+    /** Unread messages across every open conversation, for a badge. */
+    @Transactional(readOnly = true)
+    public long unreadTotal(Long callerId) {
+        return conversationRepository.findForUser(callerId).stream()
+                .filter(c -> c.getClosedAt() == null)
+                .mapToLong(c -> messageRepository.countByConversationIdAndIdGreaterThanAndSenderIdNot(
+                        c.getId(), c.lastReadBy(callerId), callerId))
+                .sum();
+    }
+
     /** Used by the STOMP layer to authorise subscriptions. */
     @Transactional(readOnly = true)
     public void assertParticipant(Long userId, Long conversationId) {
@@ -172,7 +195,12 @@ public class ChatService {
 
     private ConversationResponse toResponse(Conversation c, Long callerId) {
         Long other = c.getUserOne().equals(callerId) ? c.getUserTwo() : c.getUserOne();
-        return new ConversationResponse(c.getId(), c.getMatchId(), c.getEventId(), other, c.getStatus(), c.getLockAt(), c.getReadUntil());
+        long unread = messageRepository.countByConversationIdAndIdGreaterThanAndSenderIdNot(
+                c.getId(), c.lastReadBy(callerId), callerId);
+        MessageResponse last = messageRepository.findFirstByConversationIdOrderByIdDesc(c.getId())
+                .map(this::toResponse).orElse(null);
+        return new ConversationResponse(c.getId(), c.getMatchId(), c.getEventId(), other, c.getStatus(), c.getLockAt(),
+                c.getReadUntil(), unread, last, c.lastReadBy(other));
     }
 
     private MessageResponse toResponse(Message m) {

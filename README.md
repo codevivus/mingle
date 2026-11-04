@@ -65,7 +65,7 @@ All requests go through the gateway at `http://localhost:8080`.
 | Tickets | `POST /ticket/add` · `GET /ticket` · `GET/DELETE /ticket/{id}` · `GET /ticket/user/{userId}` · `GET /ticket/event/{eventId}` (all limited to the caller's own tickets) |
 | Matching | `GET /match/events/{eventId}/candidates[?limit=50]` (name, age, city, photo included) · `POST /match/events/{eventId}/swipe` (`{"targetUserId": 2, "action": "LIKE"}`) · `GET /match/matches[?eventId=]` |
 | Safety | `POST /match/blocks/{userId}` · `DELETE /match/blocks/{userId}` · `GET /match/blocks` · `DELETE /match/matches/{id}` (unmatch) · `POST /match/reports` (`{"reportedUserId", "reason", "note", "block"}`) · admin: `GET /match/admin/reports` · `POST /match/admin/reports/{id}/resolve` |
-| Chat | `GET /chat/conversations` · `GET /chat/{id}` · `GET /chat/{id}/messages?page=&size=` · `POST /chat/{id}/messages` · `POST /chat/{id}/unlock` |
+| Chat | `GET /chat/unread-count` · `POST /chat/{id}/read` (`{"upToMessageId": 42}` optional) · · `GET /chat/{id}` · `GET /chat/{id}/messages?page=&size=` · `POST /chat/{id}/messages` · `POST /chat/{id}/unlock` (conversations carry `unreadCount`, `lastMessage` and `otherLastReadMessageId`) |
 | WebSocket | STOMP at `ws://localhost:8080/ws?access_token=<jwt>` · send to `/app/chat/{id}` · subscribe to `/topic/conversations/{id}` · errors on `/user/queue/errors` |
 
 Status codes worth knowing: `410` the conversation ended (block or unmatch), `403` not your ticket / not in that conversation / no ticket for the event, `423` chat is locked, `402` unlock needs payment, `429` rate limited, `503` service down (circuit breaker).
