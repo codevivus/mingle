@@ -34,10 +34,10 @@ class RouteResilienceTest {
 
     @Test
     void apiRoutesHaveRateLimiterAndCircuitBreaker() {
-        var routes = routeLocator.getRoutes().collectList().block();
+        java.util.List<org.springframework.cloud.gateway.route.Route> routes = routeLocator.getRoutes().collectList().block();
         assertThat(routes).isNotEmpty();
 
-        for (var route : routes) {
+        for (org.springframework.cloud.gateway.route.Route route : routes) {
             List<String> filters = route.getFilters().stream().map(Object::toString).toList();
             String joined = String.join(" ", filters);
             if (UNFILTERED.contains(route.getId())) {

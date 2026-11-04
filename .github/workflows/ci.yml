@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    name: ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - eureka-server
+          - api-gateway
+          - a2srv-service
+          - event-service
+          - ticket-service
+          - match-service
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      # Tests use Testcontainers (PostgreSQL / Redis); Docker is available on ubuntu-latest runners.
+      - name: Build and test
+        run: ./mvnw -B -ntp verify
+
+  compose-config:
+    name: docker compose config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker-compose.yml
+        run: |
+          printf 'JWT_SECRET=ci-secret-ci-secret-ci-secret-0123456789\nINTERNAL_API_KEY=ci-internal-key\n' > .env
+          docker compose config --quiet

@@ -36,11 +36,15 @@ class MatchFlowTest {
     @Autowired SwipeRepository swipes;
     @Autowired MatchRepository matches;
     @MockBean TicketClient ticketClient;
+    @MockBean com.mingle.match_service.client.EventClient eventClient;
 
     @BeforeEach
     void setUp() {
         matches.deleteAll();
         swipes.deleteAll();
+        // A new match opens a conversation, which needs the event date.
+        when(eventClient.findById(10L)).thenReturn(new com.mingle.match_service.client.EventClient.EventInfo(
+                10L, java.time.LocalDateTime.now(), java.time.LocalDateTime.now().plusDays(1)));
         // Users 1, 2 and 3 hold tickets for event 10; user 4 only for event 11.
         when(ticketClient.holders(10L)).thenReturn(List.of(1L, 2L, 3L));
         when(ticketClient.holders(11L)).thenReturn(List.of(4L));
