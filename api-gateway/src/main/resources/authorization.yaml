@@ -11,6 +11,8 @@ authorization:
     - /swagger-ui/**
     - /webjars/**
 
+  # Every API route gets a per-caller rate limit (X-User-Id, else client IP) and a circuit breaker that
+  # answers 503 from /fallback/{service}. Swagger and the WebSocket route skip the circuit breaker.
   routes:
     - id: auth-service
       path: /auth/**
@@ -33,10 +35,23 @@ authorization:
           args:
             redis-rate-limiter.replenishRate: 5
             redis-rate-limiter.burstCapacity: 10
+        - name: CircuitBreaker
+          args:
+            name: userCB
+            fallbackUri: forward:/fallback/user
 
     - id: event-service
       path: /event/**
       uri: lb://event-service
+      filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 20
+            redis-rate-limiter.burstCapacity: 40
+        - name: CircuitBreaker
+          args:
+            name: eventCB
+            fallbackUri: forward:/fallback/event
 
     - id: swagger-docs
       path: /v3/api-docs/**
@@ -53,18 +68,50 @@ authorization:
     - id: match-service
       path: /match/**
       uri: lb://match-service
+      filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 20
+            redis-rate-limiter.burstCapacity: 40
+        - name: CircuitBreaker
+          args:
+            name: matchCB
+            fallbackUri: forward:/fallback/match
 
     - id: chat-service
       path: /chat/**
       uri: lb://match-service
+      filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 20
+            redis-rate-limiter.burstCapacity: 40
+        - name: CircuitBreaker
+          args:
+            name: chatCB
+            fallbackUri: forward:/fallback/chat
 
     - id: chat-websocket
       path: /ws/**
       uri: lb:ws://match-service
+      filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 5
+            redis-rate-limiter.burstCapacity: 10
 
     - id: ticket-service
       path: /ticket/**
       uri: lb://ticket-service
+      filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 20
+            redis-rate-limiter.burstCapacity: 40
+        - name: CircuitBreaker
+          args:
+            name: ticketCB
+            fallbackUri: forward:/fallback/ticket
 
   cors:
     allowed-origins:
