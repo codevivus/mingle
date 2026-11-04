@@ -183,4 +183,23 @@ r = await call("GET", "/chat/conversations", { token: tokA });
 expect("A no longer lists the conversation", r.status === 200 && r.json?.length === 0, r.text);
 r = await call("GET", "/match/matches", { token: tokB });
 expect("B no longer has the match", r.status === 200 && r.json?.length === 0, r.text);
+
+// Right of access and erasure.
+r = await call("GET", "/user/me/export", { token: tokA });
+expect("A exports their data", r.status === 200 && r.json?.account?.id === idA && r.json?.tickets?.length === 1 && r.json?.activity?.matches?.length === 1, r.status + " " + r.text.slice(0, 300));
+expect("the export never contains the password hash", !r.text.includes("passwordHash") && !r.text.includes("$2a$"));
+r = await call("DELETE", "/user/me", { token: tokA, body: { password: "wrong-password" } });
+expect("deleting with a wrong password is refused (401)", r.status === 401, r.status + " " + r.text.slice(0, 120));
+r = await call("DELETE", "/user/me", { token: tokA, body: { password: "Passw0rd!123" } });
+expect("A deletes their account (204)", r.status === 204, r.status + " " + r.text.slice(0, 200));
+r = await call("GET", "/ticket", { token: tokA });
+expect("A's token stops working after deletion (401)", r.status === 401, r.status);
+r = await call("POST", "/auth/login", { body: { email: a + "@example.com", password: "Passw0rd!123" } });
+expect("A cannot log in any more", r.status === 401 || r.status === 404, r.status);
+r = await call("GET", "/ticket", { token: tokB });
+expect("B's own ticket is untouched", r.status === 200 && r.json?.length === 1, r.status + " " + r.text.slice(0, 120));
+r = await call("POST", "/auth/logout", { token: tokB });
+expect("B logs out (200)", r.status === 200, r.status + " " + r.text.slice(0, 200));
+r = await call("GET", "/ticket", { token: tokB });
+expect("B's token is blacklisted after logout (401)", r.status === 401, r.status);
 log(process.exitCode ? "RESULT: FAILURES" : "RESULT: ALL PASSED");

@@ -53,6 +53,8 @@ class LogoutAndAdminTest {
 
         String query = called.get().getQuery();
         long exp = Long.parseLong(query.replace("exp=", ""));
+        assertThat(called.get().getHost()).isEqualTo("gateway");
+        assertThat(called.get().getPath()).isEqualTo("/internal/token/blacklist");
         assertThat(exp).isBetween(3590L, 3600L);
         assertThat(key.get()).isEqualTo("k");
     }

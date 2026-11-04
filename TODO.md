@@ -15,6 +15,7 @@ Open work, roughly in priority order.
 
 ## Done
 - [x] Chat read state: unread counts, last message, read receipts, total unread badge.
+- [x] Account export and deletion across services; logout now really reaches the gateway (it failed with "Host is not specified" and never blacklisted a token); a2srv talks to other services through Eureka.
 - [x] Block, unmatch and report (users) plus an admin list of open reports.
 - [x] Testcontainers 1.21.4 (works with Docker Engine 29, no local workaround), `mvnw` committed executable.
 - [x] Ticketmaster import tested against a local stand-in (documented response shape). Found and fixed: venue and city were never read (they sit under each event`s `_embedded`), and the nightly cleanup crashed on a missing cities list and could never match imported events (no end time). Still not run against the real API: needs `TICKETMASTER_API_KEY`.

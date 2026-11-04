@@ -162,6 +162,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/mingle
       DB_USERNAME: ${DB_USERNAME:-mingle}
       DB_PASSWORD: ${DB_PASSWORD:-mingle_local}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in your .env file - see .env.example}
     depends_on:
       postgres:
         condition: service_healthy
@@ -191,6 +192,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/mingle
       DB_USERNAME: ${DB_USERNAME:-mingle}
       DB_PASSWORD: ${DB_PASSWORD:-mingle_local}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in your .env file - see .env.example}
     depends_on:
       postgres:
         condition: service_healthy

@@ -15,4 +15,5 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     /** Messages the other participant sent after the given message id. */
     long countByConversationIdAndIdGreaterThanAndSenderIdNot(Long conversationId, Long afterId, Long senderId);
+    List<Message> findByConversationIdAndSenderIdOrderByIdAsc(Long conversationId, Long senderId);
 }
