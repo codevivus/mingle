@@ -32,6 +32,16 @@ public class Match {
     @Builder.Default
     private Instant createdAt = Instant.now();
 
+    @Column(name = "ended_at")
+    private Instant endedAt;
+
+    @Column(name = "ended_by")
+    private Long endedBy;
+
+    public boolean isActive() {
+        return endedAt == null;
+    }
+
     public boolean includes(Long userId) {
         return userOne.equals(userId) || userTwo.equals(userId);
     }

@@ -13,10 +13,13 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     Optional<Match> findByEventIdAndUserOneAndUserTwo(Long eventId, Long userOne, Long userTwo);
 
-    @Query("select m from Match m where m.userOne = :userId or m.userTwo = :userId order by m.createdAt desc")
+    @Query("select m from Match m where m.userOne = :low and m.userTwo = :high and m.endedAt is null")
+    List<Match> findActiveBetween(@Param("low") Long low, @Param("high") Long high);
+
+    @Query("select m from Match m where m.endedAt is null and (m.userOne = :userId or m.userTwo = :userId) order by m.createdAt desc")
     List<Match> findForUser(@Param("userId") Long userId);
 
-    @Query("select m from Match m where m.eventId = :eventId and (m.userOne = :userId or m.userTwo = :userId) order by m.createdAt desc")
+    @Query("select m from Match m where m.endedAt is null and m.eventId = :eventId and (m.userOne = :userId or m.userTwo = :userId) order by m.createdAt desc")
     List<Match> findForUserAndEvent(@Param("userId") Long userId, @Param("eventId") Long eventId);
 
     /** Returns 1 if the row was inserted, 0 if the pair already matched (safe under concurrent swipes). */

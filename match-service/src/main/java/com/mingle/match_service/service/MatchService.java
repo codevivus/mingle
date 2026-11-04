@@ -10,6 +10,7 @@ import com.mingle.match_service.entity.Match;
 import com.mingle.match_service.entity.Swipe;
 import com.mingle.match_service.entity.SwipeAction;
 import com.mingle.match_service.exception.ApiException;
+import com.mingle.match_service.repository.BlockRepository;
 import com.mingle.match_service.repository.MatchRepository;
 import com.mingle.match_service.repository.SwipeRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class MatchService {
     private final TicketClient ticketClient;
     private final UserClient userClient;
     private final SwipeRepository swipeRepository;
+    private final BlockRepository blockRepository;
     private final MatchRepository matchRepository;
     private final ApplicationEventPublisher events;
 
@@ -44,6 +46,8 @@ public class MatchService {
         }
         holders.remove(callerId);
         holders.removeAll(swipeRepository.findSwipedTargets(eventId, callerId));
+        holders.removeAll(blockRepository.findBlockedBy(callerId));
+        holders.removeAll(blockRepository.findBlockersOf(callerId));
         // A page of the deck at a time, each enriched with the public profile (best effort).
         return holders.stream().sorted().limit(Math.min(Math.max(limit, 1), MAX_CANDIDATES))
                 .map(this::withProfile).toList();
@@ -58,6 +62,10 @@ public class MatchService {
         Set<Long> holders = new HashSet<>(ticketClient.holders(eventId));
         if (!holders.contains(callerId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "You do not hold a ticket for this event");
+        }
+        if (blockRepository.existsBetween(callerId, target)) {
+            // Same answer whoever blocked whom, so a block cannot be probed.
+            throw new ApiException(HttpStatus.NOT_FOUND, "User not available");
         }
         if (!holders.contains(target)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Target user does not hold a ticket for this event");
@@ -105,6 +113,7 @@ public class MatchService {
 
     private SwipeResponse outcome(Long eventId, Long a, Long b) {
         return matchRepository.findByEventIdAndUserOneAndUserTwo(eventId, Math.min(a, b), Math.max(a, b))
+                .filter(Match::isActive)
                 .map(m -> new SwipeResponse(true, m.getId()))
                 .orElse(new SwipeResponse(false, null));
     }
