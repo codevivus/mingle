@@ -14,6 +14,7 @@ Open work, roughly in priority order.
 - [ ] Candidate profiles are fetched one by one (page of at most 100); add a batch endpoint in a2srv-service if that gets slow.
 
 ## Done
+- [x] Chat read state: unread counts, last message, read receipts, total unread badge.
 - [x] Block, unmatch and report (users) plus an admin list of open reports.
 - [x] Testcontainers 1.21.4 (works with Docker Engine 29, no local workaround), `mvnw` committed executable.
 - [x] Ticketmaster import tested against a local stand-in (documented response shape). Found and fixed: venue and city were never read (they sit under each event`s `_embedded`), and the nightly cleanup crashed on a missing cities list and could never match imported events (no end time). Still not run against the real API: needs `TICKETMASTER_API_KEY`.

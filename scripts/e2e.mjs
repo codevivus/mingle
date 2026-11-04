@@ -166,6 +166,14 @@ try {
   expect("handshake with a bad token is refused", true);
 }
 
+// Read state: B has two unread messages (REST + STOMP); reading them shows a receipt to A.
+r = await call("GET", "/chat/conversations", { token: tokB });
+expect("B has 2 unread messages", r.status === 200 && r.json?.[0]?.unreadCount === 2, r.text.slice(0, 200));
+r = await call("POST", `/chat/${convId}/read`, { token: tokB });
+expect("B marks the chat read", r.status === 200 && r.json?.unreadCount === 0, r.text.slice(0, 200));
+r = await call("GET", `/chat/${convId}`, { token: tokA });
+expect("A sees the read receipt", r.status === 200 && r.json?.otherLastReadMessageId > 0, r.text.slice(0, 200));
+
 // Safety: reporting with block=true ends the match and closes the conversation for both users.
 r = await call("POST", "/match/reports", { token: tokA, body: { reportedUserId: idB, reason: "SPAM", note: "e2e", block: true } });
 expect("A reports B and blocks them (201)", r.status === 201, r.status + " " + r.text);

@@ -46,6 +46,15 @@ public class Conversation {
     @Column(name = "unlocked_at")
     private Instant unlockedAt;
 
+    /** Highest message id each participant has read; userOne / userTwo follow the match columns. */
+    @Column(name = "last_read_one", nullable = false)
+    @Builder.Default
+    private Long lastReadOne = 0L;
+
+    @Column(name = "last_read_two", nullable = false)
+    @Builder.Default
+    private Long lastReadTwo = 0L;
+
     @Column(name = "created_at", nullable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();
@@ -53,6 +62,18 @@ public class Conversation {
     /** Set when the match ends (unmatch or block); a closed conversation cannot be read, written or unlocked. */
     @Column(name = "closed_at")
     private Instant closedAt;
+
+    public Long lastReadBy(Long userId) {
+        return userOne.equals(userId) ? lastReadOne : lastReadTwo;
+    }
+
+    public void markRead(Long userId, Long messageId) {
+        if (userOne.equals(userId)) {
+            lastReadOne = Math.max(lastReadOne, messageId);
+        } else {
+            lastReadTwo = Math.max(lastReadTwo, messageId);
+        }
+    }
 
     public boolean hasParticipant(Long userId) {
         return userOne.equals(userId) || userTwo.equals(userId);

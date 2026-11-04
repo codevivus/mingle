@@ -10,4 +10,9 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     /** Newest first; callers reverse the page to show it oldest first. */
     List<Message> findByConversationIdOrderByIdDesc(Long conversationId, Pageable pageable);
+
+    java.util.Optional<Message> findFirstByConversationIdOrderByIdDesc(Long conversationId);
+
+    /** Messages the other participant sent after the given message id. */
+    long countByConversationIdAndIdGreaterThanAndSenderIdNot(Long conversationId, Long afterId, Long senderId);
 }
