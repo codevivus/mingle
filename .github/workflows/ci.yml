@@ -34,7 +34,6 @@ jobs:
       # Tests use Testcontainers (PostgreSQL / Redis); Docker is available on ubuntu-latest runners.
       - name: Build and test
         run: |
-          chmod +x mvnw
           ./mvnw -B -ntp verify
 
   compose-config:
