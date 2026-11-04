@@ -8,6 +8,7 @@ import java.util.Map;
 
 /** Called by a2srv-service for account export and deletion. Guarded by InternalKeyFilter; the gateway does not route it. */
 @RestController
+@io.swagger.v3.oas.annotations.Hidden
 @RequestMapping("/internal/users")
 @RequiredArgsConstructor
 public class InternalUserController {

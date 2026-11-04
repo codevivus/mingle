@@ -27,6 +27,13 @@ class A2srvServiceApplicationTests {
 	@Autowired JwtTokenProvider tokens;
 
 	@Test
+	void apiDocsArePublic() throws Exception {
+		mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/v3/api-docs"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.paths").exists());
+	}
+
+	@Test
 	void contextLoads() {
 	}
 

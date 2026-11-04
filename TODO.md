@@ -14,6 +14,7 @@ Open work, roughly in priority order.
 - [ ] Candidate profiles are fetched one by one (page of at most 100); add a batch endpoint in a2srv-service if that gets slow.
 
 ## Done
+- [x] API guide (docs/API.md) and OpenAPI exports per service (match-service now has springdoc; a2srv-service API docs were blocked by its own security).
 - [x] Chat read state: unread counts, last message, read receipts, total unread badge.
 - [x] Account export and deletion across services; logout now really reaches the gateway (it failed with "Host is not specified" and never blacklisted a token); a2srv talks to other services through Eureka.
 - [x] Block, unmatch and report (users) plus an admin list of open reports.

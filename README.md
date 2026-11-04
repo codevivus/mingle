@@ -150,6 +150,10 @@ With the stack running, `node scripts/e2e.mjs` (Node 22+) registers two users, p
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): HTTPS with Caddy, closed ports, backups and the first-start checklist.
 
+### API docs
+
+[docs/API.md](docs/API.md) explains the flows for front-end and mobile developers (sign-up, matching, chat and WebSocket, safety, account data); the OpenAPI contracts are in [docs/openapi](docs/openapi) and regenerate with `node scripts/export-openapi.mjs` against a running stack.
+
 ### Test
 
 Each service has its own tests, which start PostgreSQL / Redis with Testcontainers, so Docker must be running:
