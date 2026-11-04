@@ -17,4 +17,10 @@ public interface SwipeRepository extends JpaRepository<Swipe, Long> {
 
     @Query("select s.toUser from Swipe s where s.eventId = :eventId and s.fromUser = :userId")
     List<Long> findSwipedTargets(@Param("eventId") Long eventId, @Param("userId") Long userId);
+
+    List<Swipe> findByFromUserOrderByCreatedAtAsc(Long fromUser);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("delete from Swipe s where s.fromUser = :userId or s.toUser = :userId")
+    int deleteAllOf(@Param("userId") Long userId);
 }

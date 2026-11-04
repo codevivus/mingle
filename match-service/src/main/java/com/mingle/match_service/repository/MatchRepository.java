@@ -27,4 +27,13 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     @Query(value = "insert into matches (event_id, user_one, user_two) values (:eventId, :userOne, :userTwo) on conflict do nothing",
             nativeQuery = true)
     int insertIfAbsent(@Param("eventId") Long eventId, @Param("userOne") Long userOne, @Param("userTwo") Long userTwo);
+
+    /** Every match of the user, ended ones included. */
+    @Query("select m from Match m where m.userOne = :userId or m.userTwo = :userId order by m.createdAt asc")
+    List<Match> findAllOf(@Param("userId") Long userId);
+
+    /** The database cascades the delete to the conversations and their messages. */
+    @Modifying
+    @Query("delete from Match m where m.userOne = :userId or m.userTwo = :userId")
+    int deleteAllOf(@Param("userId") Long userId);
 }

@@ -71,10 +71,10 @@ public class AuthServiceImpl implements AuthService {
         long exp = Math.max(1, (jwtTokenProvider.getRemainingValidity(token) + 999) / 1000);
 
         webClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path(tokenBlacklistUrl)
+                .uri(org.springframework.web.util.UriComponentsBuilder.fromUriString(tokenBlacklistUrl)
                         .queryParam("exp", exp)
-                        .build())
+                        .build()
+                        .toUri())
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .header("X-Internal-Key", internalApiKey)
                 .retrieve()

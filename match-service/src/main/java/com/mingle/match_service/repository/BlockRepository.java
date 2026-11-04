@@ -30,4 +30,8 @@ public interface BlockRepository extends JpaRepository<Block, Long> {
     @Modifying
     @Query("delete from Block b where b.blocker = :blocker and b.blocked = :blocked")
     int deleteByPair(@Param("blocker") Long blocker, @Param("blocked") Long blocked);
+
+    @Modifying
+    @Query("delete from Block b where b.blocker = :userId or b.blocked = :userId")
+    int deleteAllOf(@Param("userId") Long userId);
 }
