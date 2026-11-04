@@ -136,6 +136,10 @@ There is no admin by default. Register a user, then promote them once:
 docker compose exec postgres psql -U mingle -d mingle -c "UPDATE users SET role = 'ADMIN' WHERE username = 'your-username';"
 ```
 
+### End-to-end check
+
+With the stack running, `node scripts/e2e.mjs` (Node 22+) registers two users, promotes one to admin, creates an event, adds tickets, matches them and sends a message over REST and STOMP through the gateway.
+
 ### Test
 
 Each service has its own tests, which start PostgreSQL / Redis with Testcontainers, so Docker must be running:

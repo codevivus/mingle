@@ -29,9 +29,10 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, "Missing " + ex.getHeaderName() + " header", req);
     }
 
-    @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class})
+    @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class,
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
     public ResponseEntity<Map<String, Object>> handleBadRequest(Exception ex, HttpServletRequest req) {
-        return build(HttpStatus.BAD_REQUEST, "Invalid request body", req);
+        return build(HttpStatus.BAD_REQUEST, "Invalid request", req);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

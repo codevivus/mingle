@@ -7,7 +7,7 @@ Open work, roughly in priority order.
 - [ ] **Read window length.** `CHAT_READ_ONLY_DAYS` defaults to 30 (the "some time later, reading becomes paid" period); confirm the real value.
 
 ## Verification
-- [ ] Live end-to-end run on the compose stack: register two users, promote an admin, create an event, add tickets, mutual LIKE, STOMP message delivered.
+- [x] Live end-to-end run on the compose stack: `node scripts/e2e.mjs` (all checks pass).
 - [ ] Check the first CI run on `main` after the merges.
 
 ## Product
