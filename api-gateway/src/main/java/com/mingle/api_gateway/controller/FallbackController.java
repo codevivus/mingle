@@ -20,7 +20,7 @@ public class FallbackController {
     )
     @ApiResponse(responseCode = "503", description = "The service is down")
     @RequestMapping("/{service}")
-    public ResponseEntity<String> fallback(@PathVariable String service) {
+    public ResponseEntity<String> fallback(@PathVariable("service") String service) {
         String name = service.substring(0, 1).toUpperCase() + service.substring(1);
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(name + " service is temporarily unavailable");
