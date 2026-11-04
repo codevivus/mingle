@@ -116,8 +116,7 @@ authorization:
             fallbackUri: forward:/fallback/ticket
 
   cors:
-    allowed-origins:
-      - https://localhost:4200
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://localhost:4200}
     allowed-methods:
       - GET
       - POST

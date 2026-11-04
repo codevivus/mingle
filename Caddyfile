@@ -1,0 +1,25 @@
+# Public entry point in production (docker-compose.prod.yml). Caddy gets and renews the TLS certificate
+# for $DOMAIN by itself and proxies everything else to the gateway, WebSockets included.
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Service-to-service and tooling endpoints never leave the private network.
+	@private path /internal/* /swagger-ui* /v3/api-docs* /webjars/*
+	respond @private 404
+
+	@actuator {
+		path /actuator/*
+		not path /actuator/health
+	}
+	respond @actuator 404
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	reverse_proxy api-gateway:8080
+}

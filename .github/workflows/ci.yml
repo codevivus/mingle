@@ -46,3 +46,7 @@ jobs:
         run: |
           printf 'JWT_SECRET=ci-secret-ci-secret-ci-secret-0123456789\nINTERNAL_API_KEY=ci-internal-key\n' > .env
           docker compose config --quiet
+      - name: Validate the production overlay
+        run: |
+          printf 'DOMAIN=app.example.com\nCORS_ALLOWED_ORIGINS=https://app.example.com\nSMTP_HOST=smtp.example.com\n' >> .env
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet

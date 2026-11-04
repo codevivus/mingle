@@ -16,17 +16,21 @@ import java.security.MessageDigest;
 /**
  * Guards the gateway's own /internal/** endpoints (e.g. the token blacklist). They are called by
  * other services, never by end users, so they need a shared key instead of a user JWT. With no key
- * configured every request is rejected.
+ * configured the gateway refuses to start.
  */
 @Slf4j
 @Component
 public class InternalApiKeyWebFilter implements WebFilter, Ordered {
 
     static final String HEADER = "X-Internal-Key";
+    static final int MIN_KEY_LENGTH = 16;
 
     private final byte[] expectedKey;
 
     public InternalApiKeyWebFilter(@Value("${internal.api-key:}") String expectedKey) {
+        if (expectedKey.length() < MIN_KEY_LENGTH) {
+            throw new IllegalStateException("INTERNAL_API_KEY must be at least " + MIN_KEY_LENGTH + " characters");
+        }
         this.expectedKey = expectedKey.getBytes(StandardCharsets.UTF_8);
     }
 
@@ -36,7 +40,7 @@ public class InternalApiKeyWebFilter implements WebFilter, Ordered {
             return chain.filter(exchange);
         }
         String provided = exchange.getRequest().getHeaders().getFirst(HEADER);
-        if (expectedKey.length == 0 || provided == null
+        if (provided == null
                 || !MessageDigest.isEqual(expectedKey, provided.getBytes(StandardCharsets.UTF_8))) {
             log.warn("[GATEWAY] Rejected internal request to {}", exchange.getRequest().getPath());
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
