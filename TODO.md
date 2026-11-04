@@ -10,12 +10,11 @@ Open work, roughly in priority order.
 - [ ] Per-event time zone. Event times are venue-local with no zone; `EVENT_TIME_ZONE` (default `Europe/Istanbul`) applies to all events.
 
 ## Technical debt
-- [ ] Delete merged branches on GitHub (feat/identity-ownership, feat/match-service, feat/chat, feat/gateway-resilience, docs/readme-ci).
-- [ ] Upgrade Testcontainers (1.19.x fails against Docker Engine 29 without `api.version=1.44` in `~/.docker-java.properties`).
-- [ ] Commit the executable bit for the `mvnw` scripts instead of `chmod +x` in CI.
+- [ ] Delete the merged branches on GitHub (docs/readme-ci, feat/chat, feat/gateway-resilience, feat/identity-ownership, feat/match-service, fix/ci-mvnw-permission, fix/stack-startup), or turn on "Automatically delete head branches" in the repository settings.
 - [ ] Candidate profiles are fetched one by one (page of at most 100); add a batch endpoint in a2srv-service if that gets slow.
 
 ## Done
+- [x] Testcontainers 1.21.4 (works with Docker Engine 29, no local workaround), `mvnw` committed executable.
 - [x] Ticketmaster import tested against a local stand-in (documented response shape). Found and fixed: venue and city were never read (they sit under each event`s `_embedded`), and the nightly cleanup crashed on a missing cities list and could never match imported events (no end time). Still not run against the real API: needs `TICKETMASTER_API_KEY`.
 - [x] Production overlay: Caddy HTTPS, closed ports, Swagger off, non-root JRE images, secret length checks, backup and restore scripts (docs/DEPLOYMENT.md).
 - [x] Flyway for a2srv, event and ticket services (V1 baseline is idempotent, so existing databases are baselined); Hibernate only validates. New schema changes are new `V<n>__*.sql` files.
