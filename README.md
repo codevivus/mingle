@@ -106,7 +106,7 @@ Swagger UI per service (local only): `http://localhost:<port>/swagger-ui.html`.
 | Edge | Spring Cloud Gateway (reactive) |
 | Discovery | Netflix Eureka |
 | Security | Spring Security · JJWT |
-| Persistence | Spring Data JPA · PostgreSQL |
+| Persistence | Spring Data JPA · PostgreSQL · Flyway (schema owned by migrations, Hibernate only validates) |
 | Token blacklist | Redis 7 |
 | Inter-service calls | OpenFeign |
 | Mapping | MapStruct · Lombok |
