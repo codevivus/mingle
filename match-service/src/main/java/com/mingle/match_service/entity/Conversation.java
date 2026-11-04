@@ -50,6 +50,10 @@ public class Conversation {
     @Builder.Default
     private Instant createdAt = Instant.now();
 
+    /** Set when the match ends (unmatch or block); a closed conversation cannot be read, written or unlocked. */
+    @Column(name = "closed_at")
+    private Instant closedAt;
+
     public boolean hasParticipant(Long userId) {
         return userOne.equals(userId) || userTwo.equals(userId);
     }

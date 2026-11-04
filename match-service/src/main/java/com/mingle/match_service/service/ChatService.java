@@ -76,6 +76,7 @@ public class ChatService {
 
     public List<ConversationResponse> conversations(Long callerId) {
         return conversationRepository.findForUser(callerId).stream()
+                .filter(c -> c.getClosedAt() == null)
                 .map(this::syncStatus)
                 .map(c -> toResponse(c, callerId))
                 .toList();
@@ -136,6 +137,9 @@ public class ChatService {
         if (!conversation.hasParticipant(userId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "You are not part of this conversation");
         }
+        if (conversation.getClosedAt() != null) {
+            throw new ApiException(HttpStatus.GONE, "This conversation has ended");
+        }
     }
 
     private Conversation participantConversation(Long callerId, Long conversationId) {
@@ -143,6 +147,9 @@ public class ChatService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Conversation not found"));
         if (!conversation.hasParticipant(callerId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "You are not part of this conversation");
+        }
+        if (conversation.getClosedAt() != null) {
+            throw new ApiException(HttpStatus.GONE, "This conversation has ended");
         }
         return syncStatus(conversation);
     }
