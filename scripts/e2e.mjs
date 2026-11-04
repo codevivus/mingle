@@ -165,4 +165,14 @@ try {
 } catch {
   expect("handshake with a bad token is refused", true);
 }
+
+// Safety: reporting with block=true ends the match and closes the conversation for both users.
+r = await call("POST", "/match/reports", { token: tokA, body: { reportedUserId: idB, reason: "SPAM", note: "e2e", block: true } });
+expect("A reports B and blocks them (201)", r.status === 201, r.status + " " + r.text);
+r = await call("GET", `/chat/${convId}`, { token: tokB });
+expect("the conversation is closed for B (410)", r.status === 410, r.status + " " + r.text);
+r = await call("GET", "/chat/conversations", { token: tokA });
+expect("A no longer lists the conversation", r.status === 200 && r.json?.length === 0, r.text);
+r = await call("GET", "/match/matches", { token: tokB });
+expect("B no longer has the match", r.status === 200 && r.json?.length === 0, r.text);
 log(process.exitCode ? "RESULT: FAILURES" : "RESULT: ALL PASSED");
