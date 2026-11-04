@@ -67,7 +67,7 @@ class ChatFlowTest {
     }
 
     private void swipe(long caller, long target) throws Exception {
-        mvc.perform(post("/match/events/10/swipe").header(USER, caller)
+        mvc.perform(post("/match/events/10/swipe").header(USER, caller).header("X-User-Verified", "true")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"targetUserId\":" + target + ",\"action\":\"LIKE\"}"))
                 .andExpect(status().isOk());
@@ -81,7 +81,7 @@ class ChatFlowTest {
     }
 
     private void send(long caller, long conversationId, String content, int expectedStatus) throws Exception {
-        mvc.perform(post("/chat/" + conversationId + "/messages").header(USER, caller)
+        mvc.perform(post("/chat/" + conversationId + "/messages").header(USER, caller).header("X-User-Verified", "true")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"content\":\"" + content + "\"}"))
                 .andExpect(status().is(expectedStatus));

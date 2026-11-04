@@ -2,6 +2,7 @@ package com.mingle.ticket_service.controller;
 
 import com.mingle.ticket_service.dto.TicketRequest;
 import com.mingle.ticket_service.dto.TicketResponse;
+import com.mingle.ticket_service.exception.type.ForbiddenException;
 import com.mingle.ticket_service.service.TicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,6 +21,7 @@ import java.util.List;
 public class TicketController {
 
     private static final String USER_HEADER = "X-User-Id";
+    private static final String VERIFIED_HEADER = "X-User-Verified";
 
     private final TicketService ticketService;
 
@@ -27,7 +29,11 @@ public class TicketController {
     @ApiResponse(responseCode = "200", description = "Ticket successfully created")
     @PostMapping("/add")
     public ResponseEntity<TicketResponse> add(@RequestHeader(USER_HEADER) Long callerId,
+                                              @RequestHeader(value = VERIFIED_HEADER, defaultValue = "false") boolean verified,
                                               @Valid @RequestBody TicketRequest request) {
+        if (!verified) {
+            throw new ForbiddenException("Verify your email before adding tickets.");
+        }
         return ResponseEntity.ok(ticketService.add(callerId, request));
     }
 

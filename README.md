@@ -44,6 +44,7 @@ All services register with Eureka, and the gateway forwards traffic with `lb://<
 - **User profiles** — registration with email / username availability checks, profile and password updates, and search by city, age range, gender, goal, date preference, online status, recency, verification and proximity.
 - **Events** — CRUD and listing, city list, manual import trigger, nightly Ticketmaster import (03:00) and cleanup of expired events (04:00).
 - **Tickets** — create, delete and list your own tickets. The owner always comes from the `X-User-Id` header the gateway sets; a `userId` in the request body is ignored.
+- **Email verification** — registration mails a one-time link (valid 24 h, stored hashed). Until it is used the account can log in but cannot add tickets or match (`403`). In development the mail goes to MailHog at <http://localhost:8025>; for a real provider set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH`, `SMTP_STARTTLS`, `MAIL_FROM` and `APP_PUBLIC_URL`.
 - **Roles** — users are `USER` or `ADMIN`. Creating, updating, deleting and importing events is admin only; the gateway forwards the role as `X-User-Role`.
 - **Matching** — people holding a ticket to the same event see each other as candidates, can LIKE or PASS, and a mutual LIKE creates one match for that event.
 - **Chat** — each match gets a conversation: REST history and sending, plus real-time delivery over STOMP/WebSocket. Sending stops `CHAT_LOCK_AFTER_HOURS` (default 24) after the event ends (status `READ_ONLY`, `423` on send); the history stays readable for `CHAT_READ_ONLY_DAYS` (default 30) more, then the chat is `LOCKED` (`423` on read too). A locked chat is reopened through `POST /chat/{id}/unlock`, which calls a provider-agnostic `ChatUnlockService` (a stub that grants every unlock until a payment provider is chosen).
@@ -57,7 +58,7 @@ All requests go through the gateway at `http://localhost:8080`.
 
 | Area | Endpoints |
 |---|---|
-| Auth | `POST /auth/login` · `POST /auth/refresh` · `POST /auth/logout` · `POST /auth/validate` |
+| Auth | `POST /auth/login` · `POST /auth/refresh` · `POST /auth/logout` · `POST /auth/validate` · `GET /auth/verify?token=` · `POST /auth/resend-verification` (`{"email": ...}`) |
 | Users | `POST /user/register` · `GET /user/check-email` · `GET /user/check-username` · `GET/PUT /user/me` · `PUT /user/password` · `GET /user/search/*` |
 | Events | `GET/POST /event` · `GET/PUT/DELETE /event/{id}` · `GET /event/cities` · `POST /event/import` |
 | Tickets | `POST /ticket/add` · `GET /ticket` · `GET/DELETE /ticket/{id}` · `GET /ticket/user/{userId}` · `GET /ticket/event/{eventId}` (all limited to the caller's own tickets) |
@@ -131,7 +132,7 @@ cp .env.example .env   # set JWT_SECRET and INTERNAL_API_KEY (and TICKETMASTER_A
 docker compose up -d --build
 ```
 
-There is no admin by default. Register a user, then either set `ADMIN_EMAIL` to their email in `.env` and restart (they are promoted at startup; register that account first, emails are not verified) or promote them once:
+There is no admin by default. Register a user, then either set `ADMIN_EMAIL` to their email in `.env`, confirm the mailed link and restart (only a verified account is promoted at startup) or promote them once:
 
 ```bash
 docker compose exec postgres psql -U mingle -d mingle -c "UPDATE users SET role = 'ADMIN' WHERE username = 'your-username';"

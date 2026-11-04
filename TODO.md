@@ -8,7 +8,6 @@ Open work, roughly in priority order.
 
 ## Product
 - [ ] Per-event time zone. Event times are venue-local with no zone; `EVENT_TIME_ZONE` (default `Europe/Istanbul`) applies to all events.
-- [ ] Email verification (`verified` is never set to true). Until then `ADMIN_EMAIL` must be registered by its owner before the service is exposed.
 
 ## Technical debt
 - [ ] Upgrade Testcontainers (1.19.x fails against Docker Engine 29 without `api.version=1.44` in `~/.docker-java.properties`).
@@ -17,6 +16,7 @@ Open work, roughly in priority order.
 - [ ] Delete merged branches on GitHub.
 
 ## Done
+- [x] Email verification (mailed link, hashed token, 24 h); unverified users cannot add tickets or match; `ADMIN_EMAIL` only promotes verified accounts. Real SMTP provider is still to be chosen (MailHog in development).
 - [x] Live end-to-end run on the compose stack: `node scripts/e2e.mjs`.
 - [x] Candidates include name, age, city and photo.
 - [x] Logout blacklists a token for its remaining lifetime in seconds (it was milliseconds).
