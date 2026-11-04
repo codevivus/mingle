@@ -16,6 +16,7 @@ Open work, roughly in priority order.
 - [ ] Candidate profiles are fetched one by one (page of at most 100); add a batch endpoint in a2srv-service if that gets slow.
 
 ## Done
+- [x] Ticketmaster import tested against a local stand-in (documented response shape). Found and fixed: venue and city were never read (they sit under each event`s `_embedded`), and the nightly cleanup crashed on a missing cities list and could never match imported events (no end time). Still not run against the real API: needs `TICKETMASTER_API_KEY`.
 - [x] Production overlay: Caddy HTTPS, closed ports, Swagger off, non-root JRE images, secret length checks, backup and restore scripts (docs/DEPLOYMENT.md).
 - [x] Flyway for a2srv, event and ticket services (V1 baseline is idempotent, so existing databases are baselined); Hibernate only validates. New schema changes are new `V<n>__*.sql` files.
 - [x] Email verification (mailed link, hashed token, 24 h); unverified users cannot add tickets or match; `ADMIN_EMAIL` only promotes verified accounts. Real SMTP provider is still to be chosen (MailHog in development).
