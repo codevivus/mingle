@@ -55,7 +55,7 @@ let r = await call("POST", "/event", { token: tokA, body: ev });
 expect("non-admin cannot create event (403)", r.status === 403, r.status);
 
 execSync(`docker compose exec -T postgres psql -U mingle -d mingle -c "UPDATE users SET role='ADMIN' WHERE username='${a}'"`,
-  { stdio: "pipe", env: { ...process.env, PATH: process.env.PATH + ";C:\\Program Files\\Docker\\Docker\\resources\\bin" } });
+  { stdio: "pipe" });
 r = await call("POST", "/event", { token: tokA, body: ev });
 expect("admin creates event (201)", r.status === 201, r.status + " " + r.text.slice(0, 200));
 const eventId = r.json?.id;
