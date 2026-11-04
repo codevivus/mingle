@@ -110,6 +110,19 @@ class TicketOwnershipTest {
     }
 
     @Test
+    void internalHoldersListsDistinctUserIdsForEvent() throws Exception {
+        createTicket(1, "{\"eventId\": 10}");
+        createTicket(1, "{\"eventId\": 10}");
+        createTicket(2, "{\"eventId\": 10}");
+        createTicket(3, "{\"eventId\": 11}");
+
+        mvc.perform(get("/internal/tickets/event/10/holders"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.containsInAnyOrder(1, 2)));
+    }
+
+    @Test
     void deletingMissingTicketIsNotFound() throws Exception {
         mvc.perform(delete("/ticket/123456").header(USER_HEADER, 1)).andExpect(status().isNotFound());
     }
