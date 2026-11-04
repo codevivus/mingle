@@ -26,6 +26,9 @@ public class AuthServiceImpl implements AuthService {
     @Value("${gateway.token-blacklist-url}")
     private String tokenBlacklistUrl;
 
+    @Value("${gateway.internal-api-key}")
+    private String internalApiKey;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -73,6 +76,7 @@ public class AuthServiceImpl implements AuthService {
                         .queryParam("exp", exp)
                         .build())
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .header("X-Internal-Key", internalApiKey)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .block();
