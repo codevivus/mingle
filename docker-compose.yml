@@ -160,6 +160,37 @@ services:
     networks:
       - mingle-net
 
+  match-service:
+    build:
+      context: ./match-service
+      dockerfile: match-service.Dockerfile
+    container_name: match-service
+    ports:
+      - "127.0.0.1:8095:8095"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/mingle
+      DB_USERNAME: ${DB_USERNAME:-mingle}
+      DB_PASSWORD: ${DB_PASSWORD:-mingle_local}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+      ticket-service:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8095/actuator/health > /dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - mingle-net
+
 volumes:
   mingle-postgres-data:
 
