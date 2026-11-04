@@ -23,8 +23,9 @@ public class MatchController {
 
     @GetMapping("/events/{eventId}/candidates")
     public List<CandidateResponse> candidates(@RequestHeader(USER_HEADER) Long callerId,
-                                              @PathVariable Long eventId) {
-        return matchService.candidates(callerId, eventId);
+                                              @PathVariable Long eventId,
+                                              @RequestParam(defaultValue = "50") int limit) {
+        return matchService.candidates(callerId, eventId, limit);
     }
 
     @PostMapping("/events/{eventId}/swipe")

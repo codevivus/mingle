@@ -1,6 +1,7 @@
 package com.mingle.match_service.service;
 
 import com.mingle.match_service.client.TicketClient;
+import com.mingle.match_service.client.UserClient;
 import com.mingle.match_service.dto.CandidateResponse;
 import com.mingle.match_service.dto.MatchResponse;
 import com.mingle.match_service.dto.SwipeRequest;
@@ -12,6 +13,7 @@ import com.mingle.match_service.exception.ApiException;
 import com.mingle.match_service.repository.MatchRepository;
 import com.mingle.match_service.repository.SwipeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,24 +23,30 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MatchService {
 
+    private static final int MAX_CANDIDATES = 100;
+
     private final TicketClient ticketClient;
+    private final UserClient userClient;
     private final SwipeRepository swipeRepository;
     private final MatchRepository matchRepository;
     private final ApplicationEventPublisher events;
 
     @Transactional(readOnly = true)
-    public List<CandidateResponse> candidates(Long callerId, Long eventId) {
+    public List<CandidateResponse> candidates(Long callerId, Long eventId, int limit) {
         Set<Long> holders = new HashSet<>(ticketClient.holders(eventId));
         if (!holders.contains(callerId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "You do not hold a ticket for this event");
         }
         holders.remove(callerId);
         holders.removeAll(swipeRepository.findSwipedTargets(eventId, callerId));
-        return holders.stream().sorted().map(CandidateResponse::new).toList();
+        // A page of the deck at a time, each enriched with the public profile (best effort).
+        return holders.stream().sorted().limit(Math.min(Math.max(limit, 1), MAX_CANDIDATES))
+                .map(this::withProfile).toList();
     }
 
     @Transactional
@@ -83,6 +91,16 @@ public class MatchService {
         return found.stream()
                 .map(m -> new MatchResponse(m.getId(), m.getEventId(), m.otherUser(callerId), m.getCreatedAt()))
                 .toList();
+    }
+
+    private CandidateResponse withProfile(Long userId) {
+        try {
+            UserClient.Profile p = userClient.findById(userId);
+            return new CandidateResponse(userId, p.name(), p.surname(), p.age(), p.city(), p.photoUrl(), p.bio());
+        } catch (RuntimeException e) {
+            log.warn("Could not load profile of user {}: {}", userId, e.getMessage());
+            return CandidateResponse.idOnly(userId);
+        }
     }
 
     private SwipeResponse outcome(Long eventId, Long a, Long b) {

@@ -60,7 +60,7 @@ All requests go through the gateway at `http://localhost:8080`.
 | Users | `POST /user/register` · `GET /user/check-email` · `GET /user/check-username` · `GET/PUT /user/me` · `PUT /user/password` · `GET /user/search/*` |
 | Events | `GET/POST /event` · `GET/PUT/DELETE /event/{id}` · `GET /event/cities` · `POST /event/import` |
 | Tickets | `POST /ticket/add` · `GET /ticket` · `GET/DELETE /ticket/{id}` · `GET /ticket/user/{userId}` · `GET /ticket/event/{eventId}` (all limited to the caller's own tickets) |
-| Matching | `GET /match/events/{eventId}/candidates` · `POST /match/events/{eventId}/swipe` (`{"targetUserId": 2, "action": "LIKE"}`) · `GET /match/matches[?eventId=]` |
+| Matching | `GET /match/events/{eventId}/candidates[?limit=50]` (name, age, city, photo included) · `POST /match/events/{eventId}/swipe` (`{"targetUserId": 2, "action": "LIKE"}`) · `GET /match/matches[?eventId=]` |
 | Chat | `GET /chat/conversations` · `GET /chat/{id}` · `GET /chat/{id}/messages?page=&size=` · `POST /chat/{id}/messages` · `POST /chat/{id}/unlock` |
 | WebSocket | STOMP at `ws://localhost:8080/ws?access_token=<jwt>` · send to `/app/chat/{id}` · subscribe to `/topic/conversations/{id}` · errors on `/user/queue/errors` |
 
@@ -130,7 +130,7 @@ cp .env.example .env   # set JWT_SECRET and INTERNAL_API_KEY (and TICKETMASTER_A
 docker compose up -d --build
 ```
 
-There is no admin by default. Register a user, then promote them once:
+There is no admin by default. Register a user, then either set `ADMIN_EMAIL` to their email in `.env` and restart (they are promoted at startup; register that account first, emails are not verified) or promote them once:
 
 ```bash
 docker compose exec postgres psql -U mingle -d mingle -c "UPDATE users SET role = 'ADMIN' WHERE username = 'your-username';"
@@ -163,4 +163,4 @@ cd event-service
 ./mvnw spring-boot:run
 ```
 
-Configuration comes from environment variables (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `INTERNAL_API_KEY`, `REDIS_PASSWORD`, `TICKETMASTER_API_KEY`, `CHAT_LOCK_AFTER_HOURS`, `CHAT_READ_ONLY_DAYS`, `WS_ALLOWED_ORIGINS`) with local-development defaults in each service's `application.properties`.
+Configuration comes from environment variables (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `INTERNAL_API_KEY`, `REDIS_PASSWORD`, `TICKETMASTER_API_KEY`, `CHAT_LOCK_AFTER_HOURS`, `CHAT_READ_ONLY_DAYS`, `EVENT_TIME_ZONE`, `ADMIN_EMAIL`, `WS_ALLOWED_ORIGINS`) with local-development defaults in each service's `application.properties`.

@@ -68,7 +68,8 @@ public class AuthServiceImpl implements AuthService {
     public void logout(String bearerToken) {
         String token = jwtTokenProvider.resolveToken(bearerToken);
         jwtTokenProvider.validateToken(token);
-        long exp = jwtTokenProvider.getRemainingValidity(token);
+        // getRemainingValidity is in milliseconds; the gateway stores the entry for this many seconds.
+        long exp = Math.max(1, (jwtTokenProvider.getRemainingValidity(token) + 999) / 1000);
 
         webClient.post()
                 .uri(uriBuilder -> uriBuilder
