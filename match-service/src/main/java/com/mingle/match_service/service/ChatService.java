@@ -39,8 +39,13 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final ChatUnlockService unlockService;
 
-    @Value("${chat.lock-after-days:7}")
-    private long lockAfterDays;
+    /** Sending stops this long after the event ends. */
+    @Value("${chat.lock-after-hours:24}")
+    private long lockAfterHours;
+
+    /** The history stays readable this long after sending stops, then it is locked too. */
+    @Value("${chat.read-only-days:30}")
+    private long readOnlyDays;
 
     /**
      * Runs inside the swipe transaction. If event-service is down the swipe fails with 502 and can
@@ -54,8 +59,9 @@ public class ChatService {
         if (eventDate == null) {
             throw new ApiException(HttpStatus.BAD_GATEWAY, "Event has no date, cannot open a conversation");
         }
-        Instant lockAt = eventDate.toInstant(ZoneOffset.UTC).plus(Duration.ofDays(lockAfterDays));
+        Instant lockAt = eventDate.toInstant(ZoneOffset.UTC).plus(Duration.ofHours(lockAfterHours));
         conversationRepository.save(Conversation.builder()
+                .readUntil(lockAt.plus(Duration.ofDays(readOnlyDays)))
                 .matchId(event.matchId())
                 .eventId(event.eventId())
                 .userOne(event.userOne())
@@ -75,9 +81,12 @@ public class ChatService {
         return toResponse(participantConversation(callerId, conversationId), callerId);
     }
 
-    /** History stays readable while locked; only sending is blocked. */
+    /** Readable while ACTIVE or READ_ONLY; once LOCKED it needs an unlock. */
     public List<MessageResponse> history(Long callerId, Long conversationId, int page, int size) {
-        participantConversation(callerId, conversationId);
+        Conversation conversation = participantConversation(callerId, conversationId);
+        if (conversation.getStatus() == ConversationStatus.LOCKED) {
+            throw new ApiException(HttpStatus.LOCKED, "This chat is locked, unlock it to read the history");
+        }
         List<Message> newestFirst = new ArrayList<>(messageRepository.findByConversationIdOrderByIdDesc(
                 conversationId, PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100))));
         Collections.reverse(newestFirst);
@@ -92,8 +101,8 @@ public class ChatService {
         if (content.length() > MAX_CONTENT_LENGTH) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Message is longer than " + MAX_CONTENT_LENGTH + " characters");
         }
-        if (conversation.getStatus() == ConversationStatus.LOCKED) {
-            throw new ApiException(HttpStatus.LOCKED, "This chat is locked, unlock it to keep talking");
+        if (conversation.getStatus() != ConversationStatus.ACTIVE) {
+            throw new ApiException(HttpStatus.LOCKED, "This chat is closed for new messages, unlock it to keep talking");
         }
         return toResponse(messageRepository.save(Message.builder()
                 .conversationId(conversationId).senderId(callerId).content(content).build()));
@@ -134,11 +143,17 @@ public class ChatService {
         return syncStatus(conversation);
     }
 
-    /** Locks lazily: the first read after lock_at flips the stored status. */
+    /** Locks lazily: the first access after a deadline moves the stored status forward. */
     private Conversation syncStatus(Conversation c) {
-        if (c.getStatus() == ConversationStatus.ACTIVE && c.getUnlockedAt() == null
-                && !Instant.now().isBefore(c.getLockAt())) {
-            c.setStatus(ConversationStatus.LOCKED);
+        if (c.getUnlockedAt() != null) {
+            return c; // an unlocked chat is never locked again
+        }
+        Instant now = Instant.now();
+        ConversationStatus due = !now.isBefore(c.getReadUntil()) ? ConversationStatus.LOCKED
+                : !now.isBefore(c.getLockAt()) ? ConversationStatus.READ_ONLY
+                : ConversationStatus.ACTIVE;
+        if (due.ordinal() > c.getStatus().ordinal()) {
+            c.setStatus(due);
             return conversationRepository.save(c);
         }
         return c;
@@ -146,7 +161,7 @@ public class ChatService {
 
     private ConversationResponse toResponse(Conversation c, Long callerId) {
         Long other = c.getUserOne().equals(callerId) ? c.getUserTwo() : c.getUserOne();
-        return new ConversationResponse(c.getId(), c.getMatchId(), c.getEventId(), other, c.getStatus(), c.getLockAt());
+        return new ConversationResponse(c.getId(), c.getMatchId(), c.getEventId(), other, c.getStatus(), c.getLockAt(), c.getReadUntil());
     }
 
     private MessageResponse toResponse(Message m) {

@@ -45,7 +45,7 @@ All services register with Eureka, and the gateway forwards traffic with `lb://<
 - **Tickets** — create, delete and list your own tickets. The owner always comes from the `X-User-Id` header the gateway sets; a `userId` in the request body is ignored.
 - **Roles** — users are `USER` or `ADMIN`. Creating, updating, deleting and importing events is admin only; the gateway forwards the role as `X-User-Role`.
 - **Matching** — people holding a ticket to the same event see each other as candidates, can LIKE or PASS, and a mutual LIKE creates one match for that event.
-- **Chat** — each match gets a conversation: REST history and sending, plus real-time delivery over STOMP/WebSocket. The chat locks after the event end plus `CHAT_LOCK_AFTER_DAYS` (default 7) and is reopened through `POST /chat/{id}/unlock`, which calls a provider-agnostic `ChatUnlockService` (a stub that grants every unlock until a payment provider is chosen).
+- **Chat** — each match gets a conversation: REST history and sending, plus real-time delivery over STOMP/WebSocket. Sending stops `CHAT_LOCK_AFTER_HOURS` (default 24) after the event ends (status `READ_ONLY`, `423` on send); the history stays readable for `CHAT_READ_ONLY_DAYS` (default 30) more, then the chat is `LOCKED` (`423` on read too). A locked chat is reopened through `POST /chat/{id}/unlock`, which calls a provider-agnostic `ChatUnlockService` (a stub that grants every unlock until a payment provider is chosen).
 - **Resilience** — per-user (or per-IP) rate limiting with Redis and Resilience4j circuit breakers on the gateway routes, with a 503 fallback.
 - **API documentation** — springdoc / Swagger UI on every service.
 - **Observability** — Spring Boot Actuator health endpoints, used by Docker Compose health checks.
@@ -159,4 +159,4 @@ cd event-service
 ./mvnw spring-boot:run
 ```
 
-Configuration comes from environment variables (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `INTERNAL_API_KEY`, `REDIS_PASSWORD`, `TICKETMASTER_API_KEY`, `CHAT_LOCK_AFTER_DAYS`, `WS_ALLOWED_ORIGINS`) with local-development defaults in each service's `application.properties`.
+Configuration comes from environment variables (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `INTERNAL_API_KEY`, `REDIS_PASSWORD`, `TICKETMASTER_API_KEY`, `CHAT_LOCK_AFTER_HOURS`, `CHAT_READ_ONLY_DAYS`, `WS_ALLOWED_ORIGINS`) with local-development defaults in each service's `application.properties`.

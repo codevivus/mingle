@@ -137,19 +137,54 @@ class ChatFlowTest {
         send(1, id, "   ", 400);
     }
 
+    private void lockReadInThePast(long conversationId) {
+        Conversation c = conversations.findById(conversationId).orElseThrow();
+        c.setLockAt(Instant.now().minusSeconds(120));
+        c.setReadUntil(Instant.now().minusSeconds(60));
+        conversations.save(c);
+    }
+
     @Test
-    void chatLocksAfterTheEventWindowButHistoryStaysReadable() throws Exception {
+    void newConversationLocksSendingOneDayAfterTheEventAndReadingThirtyDaysLater() throws Exception {
+        long id = matchOneAndTwo();
+
+        Conversation c = conversations.findById(id).orElseThrow();
+        // The mocked event ends in one day; defaults are 24 hours to stop sending and 30 days to stop reading.
+        assertThat(c.getLockAt()).isBetween(Instant.now().plusSeconds(47 * 3600), Instant.now().plusSeconds(49 * 3600));
+        assertThat(java.time.Duration.between(c.getLockAt(), c.getReadUntil())).isEqualTo(java.time.Duration.ofDays(30));
+    }
+
+    @Test
+    void afterTheSendWindowChatIsReadOnly() throws Exception {
         long id = matchOneAndTwo();
         send(1, id, "before the lock", 200);
 
         lockInThePast(id);
 
         send(1, id, "too late", 423);
-        mvc.perform(get("/chat/" + id).header(USER, 1)).andExpect(jsonPath("$.status").value("LOCKED"));
+        mvc.perform(get("/chat/" + id).header(USER, 1)).andExpect(jsonPath("$.status").value("READ_ONLY"));
         mvc.perform(get("/chat/" + id + "/messages").header(USER, 2))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
-        assertThat(conversations.findById(id).orElseThrow().getStatus()).isEqualTo(ConversationStatus.LOCKED);
+        assertThat(conversations.findById(id).orElseThrow().getStatus()).isEqualTo(ConversationStatus.READ_ONLY);
+    }
+
+    @Test
+    void afterTheReadWindowTheHistoryIsLockedToo() throws Exception {
+        long id = matchOneAndTwo();
+        send(1, id, "old message", 200);
+
+        lockReadInThePast(id);
+
+        mvc.perform(get("/chat/" + id + "/messages").header(USER, 2)).andExpect(status().isLocked());
+        send(1, id, "nope", 423);
+        mvc.perform(get("/chat/" + id).header(USER, 1)).andExpect(jsonPath("$.status").value("LOCKED"));
+
+        mvc.perform(post("/chat/" + id + "/unlock").header(USER, 1)).andExpect(jsonPath("$.status").value("ACTIVE"));
+        mvc.perform(get("/chat/" + id + "/messages").header(USER, 2))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+        send(2, id, "welcome back", 200);
     }
 
     @Test

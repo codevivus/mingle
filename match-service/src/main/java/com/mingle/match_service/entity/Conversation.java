@@ -35,9 +35,13 @@ public class Conversation {
     @Builder.Default
     private ConversationStatus status = ConversationStatus.ACTIVE;
 
-    /** From this instant the chat is locked unless it has been unlocked. */
+    /** From this instant the chat is read-only (no sending) unless it has been unlocked. */
     @Column(name = "lock_at", nullable = false)
     private Instant lockAt;
+
+    /** From this instant the history is locked too, unless the chat has been unlocked. */
+    @Column(name = "read_until", nullable = false)
+    private Instant readUntil;
 
     @Column(name = "unlocked_at")
     private Instant unlockedAt;
