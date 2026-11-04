@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TicketOwnershipTest {
 
     private static final String USER_HEADER = "X-User-Id";
+    private static final String KEY = "test-internal-key-0123456789";
 
     @Autowired MockMvc mvc;
     @Autowired TicketRepository ticketRepository;
@@ -117,7 +118,7 @@ class TicketOwnershipTest {
         createTicket(2, "{\"eventId\": 10}");
         createTicket(3, "{\"eventId\": 11}");
 
-        mvc.perform(get("/internal/tickets/event/10/holders"))
+        mvc.perform(get("/internal/tickets/event/10/holders").header("X-Internal-Key", KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$", org.hamcrest.Matchers.containsInAnyOrder(1, 2)));
@@ -137,5 +138,35 @@ class TicketOwnershipTest {
                         .contentType(MediaType.APPLICATION_JSON).content("{\"eventId\": 10}"))
                 .andExpect(status().isForbidden());
         assertThat(ticketRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void internalEndpointsNeedTheSharedKey() throws Exception {
+        mvc.perform(get("/internal/tickets/event/10/holders")).andExpect(status().isForbidden());
+        mvc.perform(get("/internal/tickets/event/10/holders").header("X-Internal-Key", "wrong")).andExpect(status().isForbidden());
+        mvc.perform(delete("/internal/users/1")).andExpect(status().isForbidden());
+        mvc.perform(get("/internal/users/1/tickets")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void internalPurgeRemovesOnlyThatUsersTicketsAndExportListsThem() throws Exception {
+        createTicket(1, "{\"eventId\": 10}");
+        createTicket(1, "{\"eventId\": 11}");
+        createTicket(2, "{\"eventId\": 10}");
+
+        mvc.perform(get("/internal/users/1/tickets").header("X-Internal-Key", KEY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].eventId").exists())
+                .andExpect(jsonPath("$[0].hasImage").value(false));
+
+        mvc.perform(delete("/internal/users/1").header("X-Internal-Key", KEY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tickets").value(2));
+        mvc.perform(delete("/internal/users/1").header("X-Internal-Key", KEY))
+                .andExpect(jsonPath("$.tickets").value(0));
+
+        assertThat(ticketRepository.findByUserId(1L)).isEmpty();
+        assertThat(ticketRepository.findByUserId(2L)).hasSize(1);
     }
 }
