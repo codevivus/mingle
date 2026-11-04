@@ -16,6 +16,7 @@ Open work, roughly in priority order.
 - [ ] Delete merged branches on GitHub.
 
 ## Done
+- [x] Flyway for a2srv, event and ticket services (V1 baseline is idempotent, so existing databases are baselined); Hibernate only validates. New schema changes are new `V<n>__*.sql` files.
 - [x] Email verification (mailed link, hashed token, 24 h); unverified users cannot add tickets or match; `ADMIN_EMAIL` only promotes verified accounts. Real SMTP provider is still to be chosen (MailHog in development).
 - [x] Live end-to-end run on the compose stack: `node scripts/e2e.mjs`.
 - [x] Candidates include name, age, city and photo.
