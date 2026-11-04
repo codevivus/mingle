@@ -164,3 +164,9 @@ cd event-service
 ```
 
 Configuration comes from environment variables (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `INTERNAL_API_KEY`, `REDIS_PASSWORD`, `TICKETMASTER_API_KEY`, `CHAT_LOCK_AFTER_HOURS`, `CHAT_READ_ONLY_DAYS`, `EVENT_TIME_ZONE`, `ADMIN_EMAIL`, `WS_ALLOWED_ORIGINS`) with local-development defaults in each service's `application.properties`.
+
+---
+
+## License
+
+Copyright (c) 2026 Eren Yılmaz. All rights reserved. The source is publicly visible for evaluation only; see [`LICENSE`](LICENSE). To request permission to use any part of it, contact eerenyilmazz1@gmail.com.
