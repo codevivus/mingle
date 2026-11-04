@@ -8,6 +8,7 @@ import com.mingle.ticket_service.dto.TicketRequest;
 import com.mingle.ticket_service.dto.TicketResponse;
 import com.mingle.ticket_service.entity.Ticket;
 import com.mingle.ticket_service.exception.type.ExternalServiceException;
+import com.mingle.ticket_service.exception.type.ForbiddenException;
 import com.mingle.ticket_service.exception.type.TicketNotFoundException;
 import com.mingle.ticket_service.exception.type.ValidationException;
 import com.mingle.ticket_service.mapper.TicketMapper;
@@ -33,10 +34,12 @@ public class TicketServiceImpl implements TicketService {
     private final TicketRequestValidator requestValidator;
 
     @Override
-    public TicketResponse add(TicketRequest ticketRequest) {
+    public TicketResponse add(Long callerId, TicketRequest ticketRequest) {
+        // The owner always comes from the authenticated caller; a userId in the body is ignored.
+        ticketRequest.setUserId(callerId);
         validate(ticketRequest);
         EventResponse eventResponse = eventServiceClient.findById(ticketRequest.getEventId()).getBody();
-        UserResponse userResponse = userServiceClient.findById(ticketRequest.getUserId()).getBody();
+        UserResponse userResponse = userServiceClient.findById(callerId).getBody();
         if (eventResponse == null) {
             throw new ExternalServiceException("Event service did not return a valid response.");
         }
@@ -48,10 +51,8 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public TicketResponse getById(Long id) {
-        Ticket ticket = ticketRepository.findById(id)
-                .orElseThrow(() -> new TicketNotFoundException("Ticket not found with ID: " + id));
-
+    public TicketResponse getById(Long callerId, Long id) {
+        Ticket ticket = findOwned(callerId, id);
         EventResponse event = eventServiceClient.findById(ticket.getEventId()).getBody();
         UserResponse user = userServiceClient.findById(ticket.getUserId()).getBody();
 
@@ -63,53 +64,48 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public List<TicketResponse> getByUserId(Long userId) {
-        return ticketRepository.findByUserId(userId).stream()
-                .map(ticket -> {
-                    EventResponse event = eventServiceClient.findById(ticket.getEventId()).getBody();
-                    UserResponse user = userServiceClient.findById(ticket.getUserId()).getBody();
-                    if (event == null || user == null) {
-                        throw new ExternalServiceException("User or event not found for ticket ID: " + ticket.getId());
-                    }
-                    return ticketMapper.toResponse(ticket, event, user);
-                })
-                .toList();
-    }
-
-    @Override
-    public List<TicketResponse> getByEventId(Long eventId) {
-        return ticketRepository.findByEventId(eventId).stream()
-                .map(ticket -> {
-                    EventResponse event = eventServiceClient.findById(ticket.getEventId()).getBody();
-                    UserResponse user = userServiceClient.findById(ticket.getUserId()).getBody();
-                    if (event == null || user == null) {
-                        throw new ExternalServiceException("User or event not found for ticket ID: " + ticket.getId());
-                    }
-                    return ticketMapper.toResponse(ticket, event, user);
-                })
-                .toList();
-    }
-
-    @Override
-    public List<TicketResponse> getAll() {
-        return ticketRepository.findAll().stream()
-                .map(ticket -> {
-                    EventResponse event = eventServiceClient.findById(ticket.getEventId()).getBody();
-                    UserResponse user = userServiceClient.findById(ticket.getUserId()).getBody();
-                    if (event == null || user == null) {
-                        throw new ExternalServiceException("User or event not found for ticket ID: " + ticket.getId());
-                    }
-                    return ticketMapper.toResponse(ticket, event, user);
-                })
-                .toList();
-    }
-
-    @Override
-    public void delete(Long id) {
-        if (!ticketRepository.existsById(id)) {
-            throw new TicketNotFoundException("Ticket not found with ID: " + id);
+    public List<TicketResponse> getByUserId(Long callerId, Long userId) {
+        if (!callerId.equals(userId)) {
+            throw new ForbiddenException("You can only list your own tickets.");
         }
-        ticketRepository.deleteById(id);
+        return toResponses(ticketRepository.findByUserId(userId));
+    }
+
+    @Override
+    public List<TicketResponse> getByEventId(Long callerId, Long eventId) {
+        return toResponses(ticketRepository.findByUserIdAndEventId(callerId, eventId));
+    }
+
+    @Override
+    public List<TicketResponse> getAll(Long callerId) {
+        return toResponses(ticketRepository.findByUserId(callerId));
+    }
+
+    @Override
+    public void delete(Long callerId, Long id) {
+        ticketRepository.delete(findOwned(callerId, id));
+    }
+
+    private Ticket findOwned(Long callerId, Long id) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found with ID: " + id));
+        if (!ticket.getUserId().equals(callerId)) {
+            throw new ForbiddenException("This ticket belongs to another user.");
+        }
+        return ticket;
+    }
+
+    private List<TicketResponse> toResponses(List<Ticket> tickets) {
+        return tickets.stream()
+                .map(ticket -> {
+                    EventResponse event = eventServiceClient.findById(ticket.getEventId()).getBody();
+                    UserResponse user = userServiceClient.findById(ticket.getUserId()).getBody();
+                    if (event == null || user == null) {
+                        throw new ExternalServiceException("User or event not found for ticket ID: " + ticket.getId());
+                    }
+                    return ticketMapper.toResponse(ticket, event, user);
+                })
+                .toList();
     }
 
     private void validate(TicketRequest request) {

@@ -27,6 +27,12 @@ public class User {
     @Column(name = "username")
     private String username;
 
+    // Existing rows predate this column, so it is nullable in the schema; null is treated as USER.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    @Builder.Default
+    private Role role = Role.USER;
+
     @Column(name = "email")
     private String email;
 

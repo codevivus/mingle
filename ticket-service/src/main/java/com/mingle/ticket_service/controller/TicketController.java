@@ -19,48 +19,55 @@ import java.util.List;
 @Tag(name = "Ticket", description = "Operations related to ticket management")
 public class TicketController {
 
+    private static final String USER_HEADER = "X-User-Id";
+
     private final TicketService ticketService;
 
-    @Operation(summary = "Create a new ticket", description = "Creates a ticket for a given user and event")
+    @Operation(summary = "Create a new ticket", description = "Creates a ticket for the authenticated user; any userId in the body is ignored")
     @ApiResponse(responseCode = "200", description = "Ticket successfully created")
     @PostMapping("/add")
-    public ResponseEntity<TicketResponse> add(@Valid @RequestBody TicketRequest request) {
-        return ResponseEntity.ok(ticketService.add(request));
+    public ResponseEntity<TicketResponse> add(@RequestHeader(USER_HEADER) Long callerId,
+                                              @Valid @RequestBody TicketRequest request) {
+        return ResponseEntity.ok(ticketService.add(callerId, request));
     }
 
-    @Operation(summary = "Get ticket by ID", description = "Retrieves a ticket by its unique ID")
+    @Operation(summary = "Get ticket by ID", description = "Retrieves one of the caller's tickets by its ID")
     @ApiResponse(responseCode = "200", description = "Ticket retrieved successfully")
     @GetMapping("/{id}")
-    public ResponseEntity<TicketResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(ticketService.getById(id));
+    public ResponseEntity<TicketResponse> getById(@RequestHeader(USER_HEADER) Long callerId,
+                                                  @PathVariable Long id) {
+        return ResponseEntity.ok(ticketService.getById(callerId, id));
     }
 
-    @Operation(summary = "Get tickets by user ID", description = "Retrieves all tickets belonging to a specific user")
+    @Operation(summary = "Get tickets by user ID", description = "Retrieves the caller's tickets; only the caller's own id is accepted")
     @ApiResponse(responseCode = "200", description = "Tickets retrieved successfully")
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<TicketResponse>> getByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(ticketService.getByUserId(userId));
+    public ResponseEntity<List<TicketResponse>> getByUserId(@RequestHeader(USER_HEADER) Long callerId,
+                                                            @PathVariable Long userId) {
+        return ResponseEntity.ok(ticketService.getByUserId(callerId, userId));
     }
 
-    @Operation(summary = "Get tickets by event ID", description = "Retrieves all tickets for a specific event")
+    @Operation(summary = "Get tickets by event ID", description = "Retrieves the caller's own tickets for a specific event")
     @ApiResponse(responseCode = "200", description = "Tickets retrieved successfully")
     @GetMapping("/event/{eventId}")
-    public ResponseEntity<List<TicketResponse>> getByEventId(@PathVariable Long eventId) {
-        return ResponseEntity.ok(ticketService.getByEventId(eventId));
+    public ResponseEntity<List<TicketResponse>> getByEventId(@RequestHeader(USER_HEADER) Long callerId,
+                                                             @PathVariable Long eventId) {
+        return ResponseEntity.ok(ticketService.getByEventId(callerId, eventId));
     }
 
-    @Operation(summary = "Get all tickets", description = "Returns a list of all tickets in the system")
-    @ApiResponse(responseCode = "200", description = "All tickets retrieved successfully")
+    @Operation(summary = "Get all tickets", description = "Returns all tickets owned by the caller")
+    @ApiResponse(responseCode = "200", description = "Tickets retrieved successfully")
     @GetMapping
-    public ResponseEntity<List<TicketResponse>> getAll() {
-        return ResponseEntity.ok(ticketService.getAll());
+    public ResponseEntity<List<TicketResponse>> getAll(@RequestHeader(USER_HEADER) Long callerId) {
+        return ResponseEntity.ok(ticketService.getAll(callerId));
     }
 
-    @Operation(summary = "Delete a ticket", description = "Deletes a ticket by its ID")
+    @Operation(summary = "Delete a ticket", description = "Deletes one of the caller's tickets by its ID")
     @ApiResponse(responseCode = "204", description = "Ticket successfully deleted")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        ticketService.delete(id);
+    public ResponseEntity<Void> delete(@RequestHeader(USER_HEADER) Long callerId,
+                                       @PathVariable Long id) {
+        ticketService.delete(callerId, id);
         return ResponseEntity.noContent().build();
     }
 }

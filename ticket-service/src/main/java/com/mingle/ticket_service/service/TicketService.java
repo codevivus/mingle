@@ -5,11 +5,14 @@ import com.mingle.ticket_service.dto.TicketResponse;
 
 import java.util.List;
 
+/**
+ * Every operation is scoped to {@code callerId}, the user id the gateway puts in {@code X-User-Id}.
+ */
 public interface TicketService {
-    TicketResponse add(TicketRequest ticketRequest);
-    TicketResponse getById(Long id);
-    List<TicketResponse> getByUserId(Long userId);
-    List<TicketResponse> getByEventId(Long eventId);
-    List<TicketResponse> getAll();
-    void delete(Long id);
+    TicketResponse add(Long callerId, TicketRequest ticketRequest);
+    TicketResponse getById(Long callerId, Long id);
+    List<TicketResponse> getByUserId(Long callerId, Long userId);
+    List<TicketResponse> getByEventId(Long callerId, Long eventId);
+    List<TicketResponse> getAll(Long callerId);
+    void delete(Long callerId, Long id);
 }
