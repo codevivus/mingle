@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,6 +50,7 @@ class ChatFlowTest {
     @Autowired SwipeRepository swipes;
     @MockBean TicketClient ticketClient;
     @MockBean EventClient eventClient;
+    @MockBean com.mingle.match_service.client.UserClient userClient;
     @MockBean ChatUnlockService unlockService;
 
     @BeforeEach
@@ -61,7 +62,7 @@ class ChatFlowTest {
         when(ticketClient.holders(10L)).thenReturn(List.of(1L, 2L, 3L));
         // The event ends tomorrow, so the chat is open.
         when(eventClient.findById(10L)).thenReturn(
-                new EventInfo(10L, LocalDateTime.now(ZoneOffset.UTC), LocalDateTime.now(ZoneOffset.UTC).plusDays(1)));
+                new EventInfo(10L, LocalDateTime.now(ZoneId.of("Europe/Istanbul")), LocalDateTime.now(ZoneId.of("Europe/Istanbul")).plusDays(1)));
         when(unlockService.unlock(any())).thenReturn(UnlockResult.granted("test"));
     }
 

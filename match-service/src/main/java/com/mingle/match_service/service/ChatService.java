@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +39,10 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final ChatUnlockService unlockService;
 
+    /** Event times carry no zone; they are the local time of the venue, read in this zone. */
+    @Value("${chat.event-time-zone:Europe/Istanbul}")
+    private String eventTimeZone;
+
     /** Sending stops this long after the event ends. */
     @Value("${chat.lock-after-hours:24}")
     private long lockAfterHours;
@@ -54,12 +58,12 @@ public class ChatService {
     @EventListener
     public void onMatchCreated(MatchCreatedEvent event) {
         EventClient.EventInfo info = eventClient.findById(event.eventId());
-        // Event times are stored without a zone; they are treated as UTC.
+        // Event times are stored without a zone: venue-local time, see chat.event-time-zone.
         var eventDate = info.endTime() != null ? info.endTime() : info.startTime();
         if (eventDate == null) {
             throw new ApiException(HttpStatus.BAD_GATEWAY, "Event has no date, cannot open a conversation");
         }
-        Instant lockAt = eventDate.toInstant(ZoneOffset.UTC).plus(Duration.ofHours(lockAfterHours));
+        Instant lockAt = eventDate.atZone(ZoneId.of(eventTimeZone)).toInstant().plus(Duration.ofHours(lockAfterHours));
         conversationRepository.save(Conversation.builder()
                 .readUntil(lockAt.plus(Duration.ofDays(readOnlyDays)))
                 .matchId(event.matchId())
