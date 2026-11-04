@@ -37,11 +37,15 @@ class MatchFlowTest {
     @Autowired MatchRepository matches;
     @MockBean TicketClient ticketClient;
     @MockBean com.mingle.match_service.client.EventClient eventClient;
+    @MockBean com.mingle.match_service.client.UserClient userClient;
 
     @BeforeEach
     void setUp() {
         matches.deleteAll();
         swipes.deleteAll();
+        when(userClient.findById(2L)).thenReturn(new com.mingle.match_service.client.UserClient.Profile(
+                2L, "bea", "Bea", "Kaya", 27, "Istanbul", "http://img/2.png", "hi"));
+        when(userClient.findById(3L)).thenThrow(new RuntimeException("profile service down"));
         // A new match opens a conversation, which needs the event date.
         when(eventClient.findById(10L)).thenReturn(new com.mingle.match_service.client.EventClient.EventInfo(
                 10L, java.time.LocalDateTime.now(), java.time.LocalDateTime.now().plusDays(1)));
@@ -63,7 +67,10 @@ class MatchFlowTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].userId").value(2))
-                .andExpect(jsonPath("$[1].userId").value(3));
+                .andExpect(jsonPath("$[0].name").value("Bea"))
+                .andExpect(jsonPath("$[0].photoUrl").value("http://img/2.png"))
+                .andExpect(jsonPath("$[1].userId").value(3))
+                .andExpect(jsonPath("$[1].name").doesNotExist());
     }
 
     @Test
@@ -139,5 +146,13 @@ class MatchFlowTest {
     @Test
     void missingHeaderIsUnauthorized() throws Exception {
         mvc.perform(get("/match/matches")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void candidatesCanBeLimited() throws Exception {
+        mvc.perform(get("/match/events/10/candidates").param("limit", "1").header(USER, 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].userId").value(2));
     }
 }

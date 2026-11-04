@@ -70,7 +70,7 @@ r = await call("GET", "/ticket/user/" + idB, { token: tokA });
 expect("A cannot list B's tickets (403)", r.status === 403, r.status);
 
 r = await call("GET", `/match/events/${eventId}/candidates`, { token: tokA });
-expect("A's candidates = [B]", r.status === 200 && r.json?.length === 1 && r.json[0].userId === idB, r.status + " " + r.text);
+expect("A's candidates = [B]", r.status === 200 && r.json?.length === 1 && r.json[0].userId === idB && r.json[0].name === b, r.status + " " + r.text);
 r = await call("POST", `/match/events/${eventId}/swipe`, { token: tokA, body: { targetUserId: idB, action: "LIKE" } });
 expect("A likes B, no match yet", r.status === 200 && r.json?.matched === false, r.status + " " + r.text);
 r = await call("POST", `/match/events/${eventId}/swipe`, { token: tokB, body: { targetUserId: idA, action: "LIKE" } });

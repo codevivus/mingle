@@ -55,6 +55,7 @@ class ChatWebSocketTest {
     @Autowired SwipeRepository swipes;
     @MockBean TicketClient ticketClient;
     @MockBean EventClient eventClient;
+    @MockBean com.mingle.match_service.client.UserClient userClient;
 
     long conversationId;
 
