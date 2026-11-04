@@ -21,7 +21,8 @@ public class TokenValidatorServiceImpl implements TokenValidatorService {
 
     @Override
     public Mono<ValidateResponse> validateTokenReactive(String token) {
-        return webClient.get()
+        // a2srv-service exposes validation as POST /auth/validate.
+        return webClient.post()
                 .uri(validateUrl)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .retrieve()
