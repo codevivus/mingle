@@ -45,6 +45,7 @@ public class JwtTokenAuthenticationFilter implements GlobalFilter, Ordered {
                     .headers(h -> {
                         h.remove("X-User-Id");
                         h.remove("X-User-Role");
+                        h.remove("X-User-Verified");
                     })
                     .build();
             return chain.filter(exchange.mutate().request(stripped).build());
@@ -82,6 +83,7 @@ public class JwtTokenAuthenticationFilter implements GlobalFilter, Ordered {
                                 ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                                         .header("X-User-Id", userId)
                                         .header("X-User-Role", validated.getRole() != null ? validated.getRole() : "USER")
+                                        .header("X-User-Verified", String.valueOf(validated.isVerified()))
                                         .header("X-Request-ID", requestId)
                                         .build();
 

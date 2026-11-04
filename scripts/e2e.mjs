@@ -1,6 +1,6 @@
 // Live end-to-end check against a running `docker compose up` stack (Node 22+, run from the repo root):
 //   node scripts/e2e.mjs
-// Registers two users, promotes one to admin, creates an event, buys tickets, matches, chats over REST and STOMP.
+// Registers two users, verifies their email through MailHog, promotes one to admin, creates an event, buys tickets, matches, chats over REST and STOMP.
 import { execSync } from "node:child_process";
 
 const GW = "http://localhost:8080";
@@ -47,11 +47,34 @@ if (!tokA || !tokB) { log("login payload keys:", Object.keys(la || {})); process
 const idA = Number(la.userId), idB = Number(lb.userId);
 log("user ids", idA, idB);
 
+// Email verification: nothing that needs a verified account works before the mailed link is used.
+let r = await call("POST", "/ticket/add", { token: tokA, body: { eventId: 1 } });
+expect("unverified user cannot add tickets (403)", r.status === 403, r.status + " " + r.text.slice(0, 120));
+
+async function verifyByMail(name) {
+  for (let i = 0; i < 20; i++) {
+    const res = await fetch("http://localhost:8025/api/v2/search?kind=to&query=" + encodeURIComponent(name + "@example.com"));
+    const found = (await res.json()).items?.[0];
+    const token = found?.Content?.Body?.replace(/=\r?\n/g, "").match(/token=([A-Za-z0-9_-]+)/)?.[1];
+    if (token) {
+      const v = await call("GET", "/auth/verify?token=" + token);
+      expect("verify " + name + " with the mailed link", v.status === 200 && v.json?.verified === true, v.status + " " + v.text);
+      const again = await call("GET", "/auth/verify?token=" + token);
+      expect("the link works only once", again.status === 400, again.status);
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  expect("verification mail for " + name + " arrived in MailHog", false, "no mail after 10s");
+}
+await verifyByMail(a);
+await verifyByMail(b);
+
 // Without the admin role an event cannot be created.
 const ev = { title: "E2E event " + sfx, description: "e2e", city: "Istanbul", venue: "Hall",
   startTime: new Date(Date.now() + 3600e3).toISOString().slice(0, 19),
   endTime: new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 19), imageUrl: "http://x/y.png" };
-let r = await call("POST", "/event", { token: tokA, body: ev });
+r = await call("POST", "/event", { token: tokA, body: ev });
 expect("non-admin cannot create event (403)", r.status === 403, r.status);
 
 execSync(`docker compose exec -T postgres psql -U mingle -d mingle -c "UPDATE users SET role='ADMIN' WHERE username='${a}'"`,

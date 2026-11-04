@@ -59,14 +59,24 @@ class LogoutAndAdminTest {
 
     @Test
     void adminEmailPromotesAnExistingAccountOnlyAtStartup() {
-        users.save(User.builder().username("boss").email("boss@example.com").passwordHash("x").build());
-        users.save(User.builder().username("other").email("other@example.com").passwordHash("x").build());
+        users.save(User.builder().username("boss").email("boss@example.com").passwordHash("x").verified(true).build());
+        users.save(User.builder().username("other").email("other@example.com").passwordHash("x").verified(true).build());
         ReflectionTestUtils.setField(adminBootstrap, "adminEmail", "boss@example.com");
 
         adminBootstrap.run(new DefaultApplicationArguments());
 
         assertThat(users.findByEmail("boss@example.com").orElseThrow().getRole()).isEqualTo(Role.ADMIN);
         assertThat(users.findByEmail("other@example.com").orElseThrow().getRole()).isEqualTo(Role.USER);
+    }
+
+    @Test
+    void adminEmailDoesNotPromoteAnUnverifiedAccount() {
+        users.save(User.builder().username("squatter").email("squatter@example.com").passwordHash("x").verified(false).build());
+        ReflectionTestUtils.setField(adminBootstrap, "adminEmail", "squatter@example.com");
+
+        adminBootstrap.run(new DefaultApplicationArguments());
+
+        assertThat(users.findByEmail("squatter@example.com").orElseThrow().getRole()).isEqualTo(Role.USER);
     }
 
     @Test

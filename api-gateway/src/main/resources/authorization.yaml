@@ -2,6 +2,8 @@ authorization:
   whitelist-paths:
     - /auth/login
     - /auth/validate
+    - /auth/verify
+    - /auth/resend-verification
     - /user/register
     - /user/check-email
     - /user/check-username

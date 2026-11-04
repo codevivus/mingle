@@ -31,6 +31,15 @@ services:
     networks:
       - mingle-net
 
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: mailhog
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+    networks:
+      - mingle-net
+
   eureka-server:
     build:
       context: ./eureka-server
@@ -85,8 +94,18 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-mingle_local}
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file - see .env.example}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-false}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@mingle.local}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost:8080}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?Set INTERNAL_API_KEY in your .env file - see .env.example}
     depends_on:
+      mailhog:
+        condition: service_started
       postgres:
         condition: service_healthy
       eureka-server:

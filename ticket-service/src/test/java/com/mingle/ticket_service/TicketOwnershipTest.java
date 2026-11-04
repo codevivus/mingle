@@ -47,6 +47,7 @@ class TicketOwnershipTest {
     private long createTicket(long asUser, String body) throws Exception {
         MvcResult result = mvc.perform(post("/ticket/add")
                         .header(USER_HEADER, asUser)
+                        .header("X-User-Verified", "true")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
@@ -125,5 +126,16 @@ class TicketOwnershipTest {
     @Test
     void deletingMissingTicketIsNotFound() throws Exception {
         mvc.perform(delete("/ticket/123456").header(USER_HEADER, 1)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void unverifiedUsersCannotAddTickets() throws Exception {
+        mvc.perform(post("/ticket/add").header(USER_HEADER, 1)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"eventId\": 10}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post("/ticket/add").header(USER_HEADER, 1).header("X-User-Verified", "false")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"eventId\": 10}"))
+                .andExpect(status().isForbidden());
+        assertThat(ticketRepository.findAll()).isEmpty();
     }
 }

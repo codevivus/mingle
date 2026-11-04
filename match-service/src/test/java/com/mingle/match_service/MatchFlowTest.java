@@ -56,14 +56,14 @@ class MatchFlowTest {
 
     private ResultActions swipe(long caller, long eventId, long target, String action) throws Exception {
         return mvc.perform(post("/match/events/" + eventId + "/swipe")
-                .header(USER, caller)
+                .header(USER, caller).header("X-User-Verified", "true")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"targetUserId\":" + target + ",\"action\":\"" + action + "\"}"));
     }
 
     @Test
     void candidatesAreOtherTicketHoldersOfThatEvent() throws Exception {
-        mvc.perform(get("/match/events/10/candidates").header(USER, 1))
+        mvc.perform(get("/match/events/10/candidates").header(USER, 1).header("X-User-Verified", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].userId").value(2))
@@ -78,11 +78,11 @@ class MatchFlowTest {
         swipe(1, 10, 2, "LIKE").andExpect(status().isOk());
         swipe(1, 10, 3, "PASS").andExpect(status().isOk());
 
-        mvc.perform(get("/match/events/10/candidates").header(USER, 1))
+        mvc.perform(get("/match/events/10/candidates").header(USER, 1).header("X-User-Verified", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
         // Swipes by user 1 do not hide user 1 from user 2.
-        mvc.perform(get("/match/events/10/candidates").header(USER, 2))
+        mvc.perform(get("/match/events/10/candidates").header(USER, 2).header("X-User-Verified", "true"))
                 .andExpect(jsonPath("$.length()").value(2));
     }
 
@@ -128,7 +128,7 @@ class MatchFlowTest {
 
     @Test
     void callerWithoutTicketIsForbidden() throws Exception {
-        mvc.perform(get("/match/events/10/candidates").header(USER, 4)).andExpect(status().isForbidden());
+        mvc.perform(get("/match/events/10/candidates").header(USER, 4).header("X-User-Verified", "true")).andExpect(status().isForbidden());
         swipe(4, 10, 1, "LIKE").andExpect(status().isForbidden());
     }
 
@@ -150,9 +150,21 @@ class MatchFlowTest {
 
     @Test
     void candidatesCanBeLimited() throws Exception {
-        mvc.perform(get("/match/events/10/candidates").param("limit", "1").header(USER, 1))
+        mvc.perform(get("/match/events/10/candidates").param("limit", "1").header(USER, 1).header("X-User-Verified", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].userId").value(2));
+    }
+
+    @Test
+    void unverifiedUsersCannotListCandidatesOrSwipe() throws Exception {
+        mvc.perform(get("/match/events/10/candidates").header(USER, 1)).andExpect(status().isForbidden());
+        mvc.perform(post("/match/events/10/swipe").header(USER, 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"targetUserId\":2,\"action\":\"LIKE\"}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/match/events/10/candidates").header(USER, 1).header("X-User-Verified", "false"))
+                .andExpect(status().isForbidden());
+        assertThat(swipes.findAll()).isEmpty();
     }
 }

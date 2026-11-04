@@ -12,9 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Makes the user registered with ADMIN_EMAIL an admin at startup. It only promotes accounts that
- * already exist; registration never grants a role. Emails are not verified, so register the admin
- * account yourself before exposing the service, otherwise someone else could register that address
- * first.
+ * already exist and whose email is verified, so registering someone else's address is not enough;
+ * registration itself never grants a role.
  */
 @Slf4j
 @Component
@@ -33,7 +32,9 @@ public class AdminBootstrap implements ApplicationRunner {
             return;
         }
         userRepository.findByEmail(adminEmail.trim()).ifPresentOrElse(user -> {
-            if (user.getRole() != Role.ADMIN) {
+            if (!Boolean.TRUE.equals(user.getVerified())) {
+                log.warn("ADMIN_EMAIL belongs to {} but the email is not verified yet; confirm it, then restart", user.getUsername());
+            } else if (user.getRole() != Role.ADMIN) {
                 user.setRole(Role.ADMIN);
                 userRepository.save(user);
                 log.info("Promoted {} to ADMIN (ADMIN_EMAIL)", user.getUsername());

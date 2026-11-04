@@ -56,11 +56,10 @@ public class AuthServiceImpl implements AuthService {
         ValidateResponse response = new ValidateResponse();
         response.setValid(true);
         response.setUserId(userId);
-        // Read the role from the database on every validation so a demotion takes effect immediately.
-        response.setRole(userRepository.findById(Long.parseLong(userId))
-                .map(User::getRole)
-                .orElse(Role.USER)
-                .name());
+        // Read role and verification from the database on every validation so changes take effect immediately.
+        User user = userRepository.findById(Long.parseLong(userId)).orElse(null);
+        response.setRole(user != null && user.getRole() != null ? user.getRole().name() : Role.USER.name());
+        response.setVerified(user != null && Boolean.TRUE.equals(user.getVerified()));
         return response;
     }
 

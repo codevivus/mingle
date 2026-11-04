@@ -8,6 +8,7 @@ import com.mingle.a2srv_service.mapper.UserMapper;
 import com.mingle.a2srv_service.repository.UserRepository;
 import com.mingle.a2srv_service.security.JwtTokenProvider;
 import com.mingle.a2srv_service.service.UserService;
+import com.mingle.a2srv_service.service.EmailVerificationService;
 import com.mingle.a2srv_service.validation.UserRequestValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -30,6 +31,7 @@ public class UserServiceImpl implements UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRequestValidator userRequestValidator;
     private final UserMapper userMapper;
+    private final EmailVerificationService emailVerificationService;
 
     @Override
     public UserResponse register(UserRequest request) {
@@ -48,7 +50,9 @@ public class UserServiceImpl implements UserService {
         user.setIsOnline(false);
         user.setVerified(false);
 
-        return userMapper.toResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        emailVerificationService.sendFor(saved);
+        return userMapper.toResponse(saved);
     }
 
     @Override
