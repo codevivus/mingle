@@ -6,6 +6,7 @@
 
 Find events, get tickets, and meet people who are going to the same place.
 
+[![CI](https://github.com/codevivus/mingle/actions/workflows/ci.yml/badge.svg)](https://github.com/codevivus/mingle/actions/workflows/ci.yml)
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2-6DB33F?logo=springboot&logoColor=white)
 ![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-2023.0-6DB33F?logo=spring&logoColor=white)
